@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tomcat在SpringBoot中是如何启动的 | 匠人的小屋</title>
+  <meta name="keywords" content=" Tomcat SpringBoot ">
+  <meta name="description" content="Tomcat在SpringBoot中是如何启动的 | 匠人的小屋">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="概述Java 作为一个面向对象语言，给我们带来了多态，继承，封装等特性，使得我们可以利用这些特性很轻松的就能构建出易于扩展，易于维护的代码。作为一个Javaer，天天搞“对象”，那你写的对象究竟占用了多少内存呢？我们来看看你的“对象”是如何“败家”的。  本文环境：jdk1.8_64  Java 对象头内存模型我们先来看看，一个Java 对象的内存模型是怎么样的？由于我们的虚拟机是分为32位和6">
+<meta property="og:type" content="article">
+<meta property="og:title" content="你写的Java对象究竟占多少内存？">
+<meta property="og:url" content="http://luozhou.top/2020/02/27/%E4%BD%A0%E5%86%99%E7%9A%84Java%E5%AF%B9%E8%B1%A1%E7%A9%B6%E7%AB%9F%E5%8D%A0%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98%EF%BC%9F/index.html">
+<meta property="og:site_name" content="匠人的小屋">
+<meta property="og:description" content="概述Java 作为一个面向对象语言，给我们带来了多态，继承，封装等特性，使得我们可以利用这些特性很轻松的就能构建出易于扩展，易于维护的代码。作为一个Javaer，天天搞“对象”，那你写的对象究竟占用了多少内存呢？我们来看看你的“对象”是如何“败家”的。  本文环境：jdk1.8_64  Java 对象头内存模型我们先来看看，一个Java 对象的内存模型是怎么样的？由于我们的虚拟机是分为32位和6">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://cdn.pixabay.com/photo/2015/12/06/09/17/silhouette-1079240_1280.jpg">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/32%E4%BD%8DJava%E5%AF%B9%E8%B1%A1%E5%A4%B4.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/64%E4%BD%8Djava%E5%AF%B9%E8%B1%A1%E5%A4%B4.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/64%E4%BD%8Djava%E5%AF%B9%E8%B1%A1%E5%A4%B4%EF%BC%88%E6%8C%87%E9%92%88%E5%8E%8B%E7%BC%A9%EF%BC%89.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/nullObject%20%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E7%9C%8B%E5%86%85%E5%AD%98.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E5%A4%84%E7%90%86%E5%99%A8%E5%A6%82%E4%BD%95%E7%9C%8B%E5%86%85%E5%AD%98.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90-%E5%86%85%E5%AD%98%E8%AF%BB%E5%8F%96%E8%BF%87%E7%A8%8B.png?raw=true">
+<meta property="og:image" content="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/jol%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%E5%92%8C%E7%BB%9F%E8%AE%A1%E8%AF%A6%E6%83%85.png?raw=true">
+<meta property="article:published_time" content="2020-02-27T02:31:08.000Z">
+<meta property="article:modified_time" content="2020-02-28T00:52:02.318Z">
+<meta property="article:author" content="木木匠">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.pixabay.com/photo/2015/12/06/09/17/silhouette-1079240_1280.jpg">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1：.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1：.0.1" ></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js" ></script>
+
+<script src="/js/iconfont.js?v=1：.0.1" ></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value="">
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>木木匠</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="rss" href="/atom.xml" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-rss"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="github" href="https://github.com/kinglaw1204" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-github"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="oschina" href="https://my.oschina.net/luozhou" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-oschina"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="juejin" href="https://juejin.im/user/5b0261e2518825426b277d47" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-juejin"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="email" href="mailto:kinglaw1204@gmail.com" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-email"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=469183326&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(6)</small></div></li>
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    </div>
+    <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="6">
+<input type="hidden" id="yelog_site_word_count" value="18k">
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://luozhou.top/">匠人小站</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode === 13){return false;}">
+        <input id="local-search-input" class="search" type="text" placeholder="Search..." />
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Tomcat</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">Tomcat SpringBoot</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Docker</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">Java 字节码</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color5">Java</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a  class=""
+           href="/2020/02/27/%E4%BD%A0%E5%86%99%E7%9A%84Java%E5%AF%B9%E8%B1%A1%E7%A9%B6%E7%AB%9F%E5%8D%A0%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98%EF%BC%9F/"
+           data-tag="Java"
+           data-author="" >
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class=""
+           href="/2020/01/21/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/"
+           data-tag="Docker"
+           data-author="" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class=""
+           href="/2019/12/30/%E4%BB%8E1-1-2%E6%9D%A5%E7%90%86%E8%A7%A3Java%E5%AD%97%E8%8A%82%E7%A0%81/"
+           data-tag="Java 字节码"
+           data-author="" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+        <a  class=""
+           href="/2019/08/26/Tomcat%E4%B8%AD%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%99%A8%E6%98%AF%E5%A6%82%E4%BD%95%E8%AE%BE%E8%AE%A1%E7%9A%84/"
+           data-tag="Tomcat"
+           data-author="" >
+            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
+            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
+        </a>
+        
+        <a  class=""
+           href="/2019/09/09/Tomcat%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8%E6%98%AF%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E8%AF%B7%E6%B1%82%E7%9A%84/"
+           data-tag="Tomcat"
+           data-author="" >
+            <span class="post-title" title="Tomcat中的容器是如何处理请求的">Tomcat中的容器是如何处理请求的</span>
+            <span class="post-date" title="2019-09-09 08:45:24">2019/09/09</span>
+        </a>
+        
+        <a  class=""
+           href="/2020/02/28/Tomcat%E5%9C%A8SpringBoot%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E5%90%AF%E5%8A%A8%E7%9A%84/"
+           data-tag="Tomcat SpringBoot"
+           data-author="" >
+            <span class="post-title" title="Tomcat在SpringBoot中是如何启动的">Tomcat在SpringBoot中是如何启动的</span>
+            <span class="post-date" title="2020-02-28 08:51:24">2020/02/28</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-Tomcat在SpringBoot中是如何启动的" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">Tomcat在SpringBoot中是如何启动的</h1>
+    
+    <div class="article-meta">
+        
+        
+        
+        
+        <span class="tag">
+            
+            <a class="color3">Tomcat SpringBoot</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2020-02-28 08:53:22'>2020-02-28 08:51</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        <span>字数:3.3k</span>
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从-Main-方法说起"><span class="toc-text">从 Main 方法说起</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#走进Tomcat内部"><span class="toc-text">走进Tomcat内部</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#下期展望"><span class="toc-text">下期展望</span></a></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><img src="https://cdn.pixabay.com/photo/2017/09/29/11/57/cat-2798804_1280.png" alt="image"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我们知道SpringBoot给我们带来了一个全新的开发体验，我们可以直接把web程序达成jar包，直接启动，这就得益于SpringBoot内置了容器，可以直接启动，本文将以Tomcat为例，来看看SpringBoot是如何启动Tomcat的，同时也将展开学习下Tomcat的源码，了解Tomcat的设计。</p>
+<h2 id="从-Main-方法说起"><a href="#从-Main-方法说起" class="headerlink" title="从 Main 方法说起"></a>从 Main 方法说起</h2><p>用过SpringBoot的人都知道，首先要写一个main方法来启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@SpringBootApplication</span><br><span class="line">public class TomcatdebugApplication &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        SpringApplication.run(TomcatdebugApplication.class, args);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们直接点击run方法的源码，跟踪下来，发下最终 的<code>run</code>方法是调用<code>ConfigurableApplicationContext</code>方法，源码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">public ConfigurableApplicationContext run(String... args) &#123;</span><br><span class="line">		StopWatch stopWatch &#x3D; new StopWatch();</span><br><span class="line">		stopWatch.start();</span><br><span class="line">		ConfigurableApplicationContext context &#x3D; null;</span><br><span class="line">		Collection&lt;springbootexceptionreporter&gt; exceptionReporters &#x3D; new ArrayList&lt;&gt;();</span><br><span class="line">		&#x2F;&#x2F;设置系统属性『java.awt.headless』，为true则启用headless模式支持</span><br><span class="line">		configureHeadlessProperty();</span><br><span class="line">		&#x2F;&#x2F;通过*SpringFactoriesLoader*检索*META-INF&#x2F;spring.factories*，</span><br><span class="line">       &#x2F;&#x2F;找到声明的所有SpringApplicationRunListener的实现类并将其实例化，</span><br><span class="line">       &#x2F;&#x2F;之后逐个调用其started()方法，广播SpringBoot要开始执行了</span><br><span class="line">		SpringApplicationRunListeners listeners &#x3D; getRunListeners(args);</span><br><span class="line">		&#x2F;&#x2F;发布应用开始启动事件</span><br><span class="line">		listeners.starting();</span><br><span class="line">		try &#123;</span><br><span class="line">		&#x2F;&#x2F;初始化参数</span><br><span class="line">			ApplicationArguments applicationArguments &#x3D; new DefaultApplicationArguments(args);</span><br><span class="line">			&#x2F;&#x2F;创建并配置当前SpringBoot应用将要使用的Environment（包括配置要使用的PropertySource以及Profile）,</span><br><span class="line">        &#x2F;&#x2F;并遍历调用所有的SpringApplicationRunListener的environmentPrepared()方法，广播Environment准备完毕。</span><br><span class="line">			ConfigurableEnvironment environment &#x3D; prepareEnvironment(listeners, applicationArguments);</span><br><span class="line">			configureIgnoreBeanInfo(environment);</span><br><span class="line">			&#x2F;&#x2F;打印banner</span><br><span class="line">			Banner printedBanner &#x3D; printBanner(environment);</span><br><span class="line">			&#x2F;&#x2F;创建应用上下文</span><br><span class="line">			context &#x3D; createApplicationContext();</span><br><span class="line">			&#x2F;&#x2F;通过*SpringFactoriesLoader*检索*META-INF&#x2F;spring.factories*，获取并实例化异常分析器</span><br><span class="line">			exceptionReporters &#x3D; getSpringFactoriesInstances(SpringBootExceptionReporter.class,</span><br><span class="line">					new Class[] &#123; ConfigurableApplicationContext.class &#125;, context);</span><br><span class="line">			&#x2F;&#x2F;为ApplicationContext加载environment，之后逐个执行ApplicationContextInitializer的initialize()方法来进一步封装ApplicationContext，</span><br><span class="line">        &#x2F;&#x2F;并调用所有的SpringApplicationRunListener的contextPrepared()方法，【EventPublishingRunListener只提供了一个空的contextPrepared()方法】，</span><br><span class="line">        &#x2F;&#x2F;之后初始化IoC容器，并调用SpringApplicationRunListener的contextLoaded()方法，广播ApplicationContext的IoC加载完成，</span><br><span class="line">        &#x2F;&#x2F;这里就包括通过**@EnableAutoConfiguration**导入的各种自动配置类。</span><br><span class="line">			prepareContext(context, environment, listeners, applicationArguments, printedBanner);</span><br><span class="line">			&#x2F;&#x2F;刷新上下文</span><br><span class="line">			refreshContext(context);</span><br><span class="line">			&#x2F;&#x2F;再一次刷新上下文,其实是空方法，可能是为了后续扩展。</span><br><span class="line">			afterRefresh(context, applicationArguments);</span><br><span class="line">			stopWatch.stop();</span><br><span class="line">			if (this.logStartupInfo) &#123;</span><br><span class="line">				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);</span><br><span class="line">			&#125;</span><br><span class="line">			&#x2F;&#x2F;发布应用已经启动的事件</span><br><span class="line">			listeners.started(context);</span><br><span class="line">			&#x2F;&#x2F;遍历所有注册的ApplicationRunner和CommandLineRunner，并执行其run()方法。</span><br><span class="line">        &#x2F;&#x2F;我们可以实现自己的ApplicationRunner或者CommandLineRunner，来对SpringBoot的启动过程进行扩展。</span><br><span class="line">			callRunners(context, applicationArguments);</span><br><span class="line">		&#125;</span><br><span class="line">		catch (Throwable ex) &#123;</span><br><span class="line">			handleRunFailure(context, ex, exceptionReporters, listeners);</span><br><span class="line">			throw new IllegalStateException(ex);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		try &#123;</span><br><span class="line">		&#x2F;&#x2F;应用已经启动完成的监听事件</span><br><span class="line">			listeners.running(context);</span><br><span class="line">		&#125;</span><br><span class="line">		catch (Throwable ex) &#123;</span><br><span class="line">			handleRunFailure(context, ex, exceptionReporters, null);</span><br><span class="line">			throw new IllegalStateException(ex);</span><br><span class="line">		&#125;</span><br><span class="line">		return context;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实这个方法我们可以简单的总结下步骤为<br>&gt;  1. 配置属性<br>&gt; 2. 获取监听器，发布应用开始启动事件<br>&gt; 3. 初始化输入参数<br>&gt; 4. 配置环境，输出banner<br>&gt; 5. 创建上下文<br>&gt; 6. 预处理上下文<br>&gt; 7. 刷新上下文<br>&gt; 8. 再刷新上下文<br>&gt; 9. 发布应用已经启动事件<br>&gt; 10. 发布应用启动完成事件</p>
+<p>其实上面这段代码，如果只要分析tomcat内容的话，只需要关注两个内容即可，上下文是如何创建的，上下文是如何刷新的，分别对应的方法就是<code>createApplicationContext()</code> 和<code>refreshContext(context)</code>，接下来我们来看看这两个方法做了什么。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">protected ConfigurableApplicationContext createApplicationContext() &#123;</span><br><span class="line">		Class&lt;!--?--&gt; contextClass &#x3D; this.applicationContextClass;</span><br><span class="line">		if (contextClass &#x3D;&#x3D; null) &#123;</span><br><span class="line">			try &#123;</span><br><span class="line">				switch (this.webApplicationType) &#123;</span><br><span class="line">				case SERVLET:</span><br><span class="line">					contextClass &#x3D; Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);</span><br><span class="line">					break;</span><br><span class="line">				case REACTIVE:</span><br><span class="line">					contextClass &#x3D; Class.forName(DEFAULT_REACTIVE_WEB_CONTEXT_CLASS);</span><br><span class="line">					break;</span><br><span class="line">				default:</span><br><span class="line">					contextClass &#x3D; Class.forName(DEFAULT_CONTEXT_CLASS);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			catch (ClassNotFoundException ex) &#123;</span><br><span class="line">				throw new IllegalStateException(</span><br><span class="line">						&quot;Unable create a default ApplicationContext, &quot; + &quot;please specify an ApplicationContextClass&quot;,</span><br><span class="line">						ex);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		return (ConfigurableApplicationContext) BeanUtils.instantiateClass(contextClass);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里就是根据我们的<code>webApplicationType</code> 来判断创建哪种类型的Servlet,代码中分别对应着Web类型(SERVLET),响应式Web类型（REACTIVE),非Web类型（default),我们建立的是Web类型，所以肯定实例化<br><code>DEFAULT_SERVLET_WEB_CONTEXT_CLASS</code>指定的类，也就是<code>AnnotationConfigServletWebServerApplicationContext</code>类，我们来用图来说明下这个类的关系</p>
+<p><img src="https://oscimg.oschina.net/oscnet/ddfa51d6e2de3d57c7422625e51f6250314.jpg" alt=""></p>
+<p>通过这个类图我们可以知道，这个类继承的是<code>ServletWebServerApplicationContext</code>,这就是我们真正的主角，而这个类最终是继承了<code>AbstractApplicationContext</code>，了解完创建上下文的情况后，我们再来看看刷新上下文，相关代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;类：SpringApplication.java</span><br><span class="line"></span><br><span class="line">private void refreshContext(ConfigurableApplicationContext context) &#123;</span><br><span class="line">    &#x2F;&#x2F;直接调用刷新方法</span><br><span class="line">		refresh(context);</span><br><span class="line">		if (this.registerShutdownHook) &#123;</span><br><span class="line">			try &#123;</span><br><span class="line">				context.registerShutdownHook();</span><br><span class="line">			&#125;</span><br><span class="line">			catch (AccessControlException ex) &#123;</span><br><span class="line">				&#x2F;&#x2F; Not allowed in some environments.</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#x2F;&#x2F;类：SpringApplication.java</span><br><span class="line"></span><br><span class="line">protected void refresh(ApplicationContext applicationContext) &#123;</span><br><span class="line">		Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);</span><br><span class="line">		((AbstractApplicationContext) applicationContext).refresh();</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>这里还是直接传递调用本类的<code>refresh(context)</code>方法，最后是强转成父类<code>AbstractApplicationContext</code>调用其<code>refresh()</code>方法,该代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; 类：AbstractApplicationContext	</span><br><span class="line">public void refresh() throws BeansException, IllegalStateException &#123;</span><br><span class="line">		synchronized (this.startupShutdownMonitor) &#123;</span><br><span class="line">			&#x2F;&#x2F; Prepare this context for refreshing.</span><br><span class="line">			prepareRefresh();</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; Tell the subclass to refresh the internal bean factory.</span><br><span class="line">			ConfigurableListableBeanFactory beanFactory &#x3D; obtainFreshBeanFactory();</span><br><span class="line"></span><br><span class="line">			&#x2F;&#x2F; Prepare the bean factory for use in this context.</span><br><span class="line">			prepareBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">			try &#123;</span><br><span class="line">				&#x2F;&#x2F; Allows post-processing of the bean factory in context subclasses.</span><br><span class="line">				postProcessBeanFactory(beanFactory);</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Invoke factory processors registered as beans in the context.</span><br><span class="line">				invokeBeanFactoryPostProcessors(beanFactory);</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Register bean processors that intercept bean creation.</span><br><span class="line">				registerBeanPostProcessors(beanFactory);</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Initialize message source for this context.</span><br><span class="line">				initMessageSource();</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Initialize event multicaster for this context.</span><br><span class="line">				initApplicationEventMulticaster();</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Initialize other special beans in specific context subclasses.这里的意思就是调用各个子类的onRefresh()</span><br><span class="line">				onRefresh();</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Check for listener beans and register them.</span><br><span class="line">				registerListeners();</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Instantiate all remaining (non-lazy-init) singletons.</span><br><span class="line">				finishBeanFactoryInitialization(beanFactory);</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Last step: publish corresponding event.</span><br><span class="line">				finishRefresh();</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			catch (BeansException ex) &#123;</span><br><span class="line">				if (logger.isWarnEnabled()) &#123;</span><br><span class="line">					logger.warn(&quot;Exception encountered during context initialization - &quot; +</span><br><span class="line">							&quot;cancelling refresh attempt: &quot; + ex);</span><br><span class="line">				&#125;</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Destroy already created singletons to avoid dangling resources.</span><br><span class="line">				destroyBeans();</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Reset &#39;active&#39; flag.</span><br><span class="line">				cancelRefresh(ex);</span><br><span class="line"></span><br><span class="line">				&#x2F;&#x2F; Propagate exception to caller.</span><br><span class="line">				throw ex;</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			finally &#123;</span><br><span class="line">				&#x2F;&#x2F; Reset common introspection caches in Spring&#39;s core, since we</span><br><span class="line">				&#x2F;&#x2F; might not ever need metadata for singleton beans anymore...</span><br><span class="line">				resetCommonCaches();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我们看到<code>onRefresh()</code>方法是调用其子类的实现，根据我们上文的分析，我们这里的子类是<code>ServletWebServerApplicationContext</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;类：ServletWebServerApplicationContext</span><br><span class="line">protected void onRefresh() &#123;</span><br><span class="line">		super.onRefresh();</span><br><span class="line">		try &#123;</span><br><span class="line">			createWebServer();</span><br><span class="line">		&#125;</span><br><span class="line">		catch (Throwable ex) &#123;</span><br><span class="line">			throw new ApplicationContextException(&quot;Unable to start web server&quot;, ex);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">private void createWebServer() &#123;</span><br><span class="line">		WebServer webServer &#x3D; this.webServer;</span><br><span class="line">		ServletContext servletContext &#x3D; getServletContext();</span><br><span class="line">		if (webServer &#x3D;&#x3D; null &amp;&amp; servletContext &#x3D;&#x3D; null) &#123;</span><br><span class="line">			ServletWebServerFactory factory &#x3D; getWebServerFactory();</span><br><span class="line">			this.webServer &#x3D; factory.getWebServer(getSelfInitializer());</span><br><span class="line">		&#125;</span><br><span class="line">		else if (servletContext !&#x3D; null) &#123;</span><br><span class="line">			try &#123;</span><br><span class="line">				getSelfInitializer().onStartup(servletContext);</span><br><span class="line">			&#125;</span><br><span class="line">			catch (ServletException ex) &#123;</span><br><span class="line">				throw new ApplicationContextException(&quot;Cannot initialize servlet context&quot;, ex);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		initPropertySources();</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里，其实庐山真面目已经出来了，<code>createWebServer()</code>就是启动web服务，但是还没有真正启动Tomcat，既然<code>webServer</code>是通过<code>ServletWebServerFactory</code>来获取的，我们就来看看这个工厂的真面目。</p>
+<p><img src="https://oscimg.oschina.net/oscnet/32105bd09038062130bae500d6717f223f8.jpg" alt=""></p>
+<h2 id="走进Tomcat内部"><a href="#走进Tomcat内部" class="headerlink" title="走进Tomcat内部"></a>走进Tomcat内部</h2><p>根据上图我们发现，工厂类是一个接口，各个具体服务的实现是由各个子类来实现的，所以我们就去看看<code>TomcatServletWebServerFactory.getWebServer()</code>的实现。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public WebServer getWebServer(ServletContextInitializer... initializers) &#123;</span><br><span class="line">	Tomcat tomcat &#x3D; new Tomcat();</span><br><span class="line">	File baseDir &#x3D; (this.baseDirectory !&#x3D; null) ? this.baseDirectory : createTempDir(&quot;tomcat&quot;);</span><br><span class="line">	tomcat.setBaseDir(baseDir.getAbsolutePath());</span><br><span class="line">	Connector connector &#x3D; new Connector(this.protocol);</span><br><span class="line">	tomcat.getService().addConnector(connector);</span><br><span class="line">	customizeConnector(connector);</span><br><span class="line">	tomcat.setConnector(connector);</span><br><span class="line">	tomcat.getHost().setAutoDeploy(false);</span><br><span class="line">	configureEngine(tomcat.getEngine());</span><br><span class="line">	for (Connector additionalConnector : this.additionalTomcatConnectors) &#123;</span><br><span class="line">		tomcat.getService().addConnector(additionalConnector);</span><br><span class="line">	&#125;</span><br><span class="line">	prepareContext(tomcat.getHost(), initializers);</span><br><span class="line">	return getTomcatWebServer(tomcat);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>根据上面的代码，我们发现其主要做了两件事情，第一件事就是把Connnctor(我们称之为连接器)对象添加到Tomcat中，第二件事就是<code>configureEngine</code>,这连接器我们勉强能理解（不理解后面会述说），那这个<code>Engine</code>是什么呢？我们查看<code>tomcat.getEngine()</code>的源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">public Engine getEngine() &#123;</span><br><span class="line">    Service service &#x3D; getServer().findServices()[0];</span><br><span class="line">    if (service.getContainer() !&#x3D; null) &#123;</span><br><span class="line">        return service.getContainer();</span><br><span class="line">    &#125;</span><br><span class="line">    Engine engine &#x3D; new StandardEngine();</span><br><span class="line">    engine.setName( &quot;Tomcat&quot; );</span><br><span class="line">    engine.setDefaultHost(hostname);</span><br><span class="line">    engine.setRealm(createDefaultRealm());</span><br><span class="line">    service.setContainer(engine);</span><br><span class="line">    return engine;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据上面的源码，我们发现，原来这个Engine是容器，我们继续跟踪源码，找到<code>Container</code>接口</p>
+<p><img src="https://oscimg.oschina.net/oscnet/d46479019a9158e06e887998d303487e90e.jpg" alt=""></p>
+<p>上图中，我们看到了4个子接口，分别是Engine,Host,Context,Wrapper。我们从继承关系上可以知道他们都是容器，那么他们到底有啥区别呢？我看看他们的注释是怎么说的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"> &#x2F;**</span><br><span class="line"> If used, an Engine is always the top level Container in a Catalina</span><br><span class="line"> * hierarchy. Therefore, the implementation&#39;s &lt;code&gt;setParent()&lt;&#x2F;code&gt; method</span><br><span class="line"> * should throw &lt;code&gt;IllegalArgumentException&lt;&#x2F;code&gt;.</span><br><span class="line"> *</span><br><span class="line"> * @author Craig R. McClanahan</span><br><span class="line"> *&#x2F;</span><br><span class="line">public interface Engine extends Container &#123;</span><br><span class="line">    &#x2F;&#x2F;省略代码</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**</span><br><span class="line"> * &lt;p&gt;</span><br><span class="line"> * The parent Container attached to a Host is generally an Engine, but may</span><br><span class="line"> * be some other implementation, or may be omitted if it is not necessary.</span><br><span class="line"> * &lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> * The child containers attached to a Host are generally implementations</span><br><span class="line"> * of Context (representing an individual servlet context).</span><br><span class="line"> *</span><br><span class="line"> * @author Craig R. McClanahan</span><br><span class="line"> *&#x2F;</span><br><span class="line">public interface Host extends Container &#123;</span><br><span class="line">&#x2F;&#x2F;省略代码</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line">&#x2F;*** &lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> * The parent Container attached to a Context is generally a Host, but may</span><br><span class="line"> * be some other implementation, or may be omitted if it is not necessary.</span><br><span class="line"> * &lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> * The child containers attached to a Context are generally implementations</span><br><span class="line"> * of Wrapper (representing individual servlet definitions).</span><br><span class="line"> * &lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> *</span><br><span class="line"> * @author Craig R. McClanahan</span><br><span class="line"> *&#x2F;</span><br><span class="line">public interface Context extends Container, ContextBind &#123;</span><br><span class="line">    &#x2F;&#x2F;省略代码</span><br><span class="line">&#125;</span><br><span class="line">&#x2F;**&lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> * The parent Container attached to a Wrapper will generally be an</span><br><span class="line"> * implementation of Context, representing the servlet context (and</span><br><span class="line"> * therefore the web application) within which this servlet executes.</span><br><span class="line"> * &lt;&#x2F;p&gt;&lt;p&gt;</span><br><span class="line"> * Child Containers are not allowed on Wrapper implementations, so the</span><br><span class="line"> * &lt;code&gt;addChild()&lt;&#x2F;code&gt; method should throw an</span><br><span class="line"> * &lt;code&gt;IllegalArgumentException&lt;&#x2F;code&gt;.</span><br><span class="line"> *</span><br><span class="line"> * @author Craig R. McClanahan</span><br><span class="line"> *&#x2F;</span><br><span class="line">public interface Wrapper extends Container &#123;</span><br><span class="line"></span><br><span class="line">    &#x2F;&#x2F;省略代码</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的注释翻译过来就是，<code>Engine</code>是最高级别的容器，其子容器是<code>Host</code>,<code>Host</code>的子容器是<code>Context</code>,<code>Wrapper</code>是<code>Context</code>的子容器，所以这4个容器的关系就是父子关系，也就是<code>Engine</code>&gt;<code>Host</code>&gt;<code>Context</code>&gt;<code>Wrapper</code>。<br>我们再看看<code>Tomcat</code>类的源码:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F;部分源码，其余部分省略。</span><br><span class="line">public class Tomcat &#123;</span><br><span class="line">&#x2F;&#x2F;设置连接器</span><br><span class="line">     public void setConnector(Connector connector) &#123;</span><br><span class="line">        Service service &#x3D; getService();</span><br><span class="line">        boolean found &#x3D; false;</span><br><span class="line">        for (Connector serviceConnector : service.findConnectors()) &#123;</span><br><span class="line">            if (connector &#x3D;&#x3D; serviceConnector) &#123;</span><br><span class="line">                found &#x3D; true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (!found) &#123;</span><br><span class="line">            service.addConnector(connector);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获取service</span><br><span class="line">       public Service getService() &#123;</span><br><span class="line">        return getServer().findServices()[0];</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;设置Host容器</span><br><span class="line">     public void setHost(Host host) &#123;</span><br><span class="line">        Engine engine &#x3D; getEngine();</span><br><span class="line">        boolean found &#x3D; false;</span><br><span class="line">        for (Container engineHost : engine.findChildren()) &#123;</span><br><span class="line">            if (engineHost &#x3D;&#x3D; host) &#123;</span><br><span class="line">                found &#x3D; true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        if (!found) &#123;</span><br><span class="line">            engine.addChild(host);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获取Engine容器</span><br><span class="line">     public Engine getEngine() &#123;</span><br><span class="line">        Service service &#x3D; getServer().findServices()[0];</span><br><span class="line">        if (service.getContainer() !&#x3D; null) &#123;</span><br><span class="line">            return service.getContainer();</span><br><span class="line">        &#125;</span><br><span class="line">        Engine engine &#x3D; new StandardEngine();</span><br><span class="line">        engine.setName( &quot;Tomcat&quot; );</span><br><span class="line">        engine.setDefaultHost(hostname);</span><br><span class="line">        engine.setRealm(createDefaultRealm());</span><br><span class="line">        service.setContainer(engine);</span><br><span class="line">        return engine;</span><br><span class="line">    &#125;</span><br><span class="line">    &#x2F;&#x2F;获取server</span><br><span class="line">       public Server getServer() &#123;</span><br><span class="line"></span><br><span class="line">        if (server !&#x3D; null) &#123;</span><br><span class="line">            return server;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        System.setProperty(&quot;catalina.useNaming&quot;, &quot;false&quot;);</span><br><span class="line"></span><br><span class="line">        server &#x3D; new StandardServer();</span><br><span class="line"></span><br><span class="line">        initBaseDir();</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; Set configuration source</span><br><span class="line">        ConfigFileLoader.setSource(new CatalinaBaseConfigurationSource(new File(basedir), null));</span><br><span class="line"></span><br><span class="line">        server.setPort( -1 );</span><br><span class="line"></span><br><span class="line">        Service service &#x3D; new StandardService();</span><br><span class="line">        service.setName(&quot;Tomcat&quot;);</span><br><span class="line">        server.addService(service);</span><br><span class="line">        return server;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    &#x2F;&#x2F;添加Context容器</span><br><span class="line">      public Context addContext(Host host, String contextPath, String contextName,</span><br><span class="line">            String dir) &#123;</span><br><span class="line">        silence(host, contextName);</span><br><span class="line">        Context ctx &#x3D; createContext(host, contextPath);</span><br><span class="line">        ctx.setName(contextName);</span><br><span class="line">        ctx.setPath(contextPath);</span><br><span class="line">        ctx.setDocBase(dir);</span><br><span class="line">        ctx.addLifecycleListener(new FixContextListener());</span><br><span class="line"></span><br><span class="line">        if (host &#x3D;&#x3D; null) &#123;</span><br><span class="line">            getHost().addChild(ctx);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            host.addChild(ctx);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">    &#x2F;&#x2F;添加Wrapper容器</span><br><span class="line">         public static Wrapper addServlet(Context ctx,</span><br><span class="line">                                      String servletName,</span><br><span class="line">                                      Servlet servlet) &#123;</span><br><span class="line">        &#x2F;&#x2F; will do class for name and set init params</span><br><span class="line">        Wrapper sw &#x3D; new ExistingStandardWrapper(servlet);</span><br><span class="line">        sw.setName(servletName);</span><br><span class="line">        ctx.addChild(sw);</span><br><span class="line"></span><br><span class="line">        return sw;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>阅读<code>Tomcat</code>的<code>getServer()</code>我们可以知道，<code>Tomcat</code>的最顶层是<code>Server</code>,Server就是<code>Tomcat</code>的实例，一个<code>Tomcat</code>一个<code>Server</code>;通过<code>getEngine()</code>我们可以了解到Server下面是Service，而且是多个，一个Service代表我们部署的一个应用，而且我们还可以知道，<code>Engine</code>容器，一个<code>service</code>只有一个；根据父子关系，我们看<code>setHost()</code>源码可以知道，<code>host</code>容器有多个；同理，我们发现<code>addContext()</code>源码下，<code>Context</code>也是多个；<code>addServlet()</code>表明<code>Wrapper</code>容器也是多个，而且这段代码也暗示了，其实<code>Wrapper</code>和<code>Servlet</code>是一层意思。另外我们根据<code>setConnector</code>源码可以知道，连接器(<code>Connector</code>)是设置在<code>service</code>下的，而且是可以设置多个连接器(<code>Connector</code>)。</p>
+<p>根据上面分析，我们可以小结下：<br>Tomcat主要包含了2个核心组件，连接器(Connector)和容器(Container),用图表示如下：</p>
+<p><img src="https://oscimg.oschina.net/oscnet/f5163f6d4c2cf52cc41c757356896693782.jpg" alt=""></p>
+<p>一个<code>Tomcat</code>是一个<code>Server</code>,一个<code>Server</code>下有多个<code>service</code>，也就是我们部署的多个应用，一个应用下有多个连接器(<code>Connector</code>)和一个容器（<code>Container</code>）,容器下有多个子容器，关系用图表示如下：</p>
+<p><img src="https://oscimg.oschina.net/oscnet/a98162cf99f8098dd76d307551593266ce0.jpg" alt=""></p>
+<p><code>Engine</code>下有多个<code>Host</code>子容器，<code>Host</code>下有多个<code>Context</code>子容器，<code>Context</code>下有多个<code>Wrapper</code>子容器。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>  SpringBoot的启动是通过<code>new SpringApplication()</code>实例来启动的，启动过程主要做如下几件事情：<br>  &gt;  1. 配置属性<br>&gt; 2. 获取监听器，发布应用开始启动事件<br>&gt; 3. 初始化输入参数<br>&gt; 4. 配置环境，输出banner<br>&gt; 5. 创建上下文<br>&gt; 6. 预处理上下文<br>&gt; 7. 刷新上下文<br>&gt; 8. 再刷新上下文<br>&gt; 9. 发布应用已经启动事件<br>&gt; 10. 发布应用启动完成事件</p>
+<p>而启动Tomcat就是在第7步中“刷新上下文”；Tomcat的启动主要是初始化2个核心组件，连接器(Connector)和容器（Container），一个Tomcat实例就是一个Server，一个Server包含多个Service，也就是多个应用程序，每个Service包含多个连接器（Connetor）和一个容器（Container),而容器下又有多个子容器，按照父子关系分别为：Engine,Host,Context,Wrapper，其中除了Engine外，其余的容器都是可以有多个。</p>
+<h2 id="下期展望"><a href="#下期展望" class="headerlink" title="下期展望"></a>下期展望</h2><p>   本期文章通过SpringBoot的启动来窥探了Tomcat的内部结构，下一期，我们来分析下本次文章中的连接器(<code>Connetor</code>)和容器(Container)的作用，敬请期待。</p>
+<blockquote>
+<p>版权声明：原创文章，转载请注明出处。</p>
+</blockquote>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a  class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>Tomcat在SpringBoot中是如何启动的</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3.3k</span></p>
+    <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
+    <p><span class="copy-title">发布时间:</span>2020-02-28, 08:51:24</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-28, 08:53:22</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/02/28/Tomcat%E5%9C%A8SpringBoot%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E5%90%AF%E5%8A%A8%E7%9A%84/" title="Tomcat在SpringBoot中是如何启动的">http://luozhou.top/2020/02/28/Tomcat%E5%9C%A8SpringBoot%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E5%90%AF%E5%8A%A8%E7%9A%84/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2016-2020 木木匠（罗洲）</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" ></a>
+
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close"  onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="/js/jquery.pjax.js?v=1：.0.1" ></script>
+
+<script src="/js/script.js?v=1：.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['#Tomcat','#Tomcat SpringBoot','#Docker','#Java 字节码','#Java',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: ;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    
+    .nav {
+        width: 542px;
+    }
+    .nav.fullscreen {
+        margin-left: -542px;
+    }
+    .nav-left {
+        width: 120px;
+    }
+    
+    
+    @media screen and (max-width: 1468px) {
+        .nav {
+            width: 492px;
+        }
+        .nav.fullscreen {
+            margin-left: -492px;
+        }
+        .nav-left {
+            width: 100px;
+        }
+    }
+    
+    
+    @media screen and (max-width: 1024px) {
+        .nav {
+            width: 492px;
+            margin-left: -492px
+        }
+        .nav.fullscreen {
+            margin-left: 0;
+        }
+        .nav .hide-list.fullscreen {
+            left: 492px
+        }
+    }
+    
+    @media screen and (max-width: 426px) {
+        .nav {
+            width: 100%;
+        }
+        .nav-left {
+            width: 100%;
+        }
+    }
+    
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("https://i.loli.net/2019/07/22/5d3521411f3f169375.png");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+</style>
+
+
+
+
+
+
+
+</html>
