@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>从1+1=2来理解Java字节码 | 匠人的小屋</title>
+  <meta name="keywords" content=" Java，字节码 ">
+  <meta name="description" content="从1+1=2来理解Java字节码 | 匠人的小屋">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="木木匠的个人博客，分享生活，技术和人生感悟">
+<meta property="og:type" content="website">
+<meta property="og:title" content="匠人的小屋">
+<meta property="og:url" content="http://luozhou.top/archives/index.html">
+<meta property="og:site_name" content="匠人的小屋">
+<meta property="og:description" content="木木匠的个人博客，分享生活，技术和人生感悟">
+<meta property="og:locale" content="en_US">
+<meta property="article:author" content="木木匠">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1：.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1：.0.1" ></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js" ></script>
+
+<script src="/js/iconfont.js?v=1：.0.1" ></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value="">
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>木木匠</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="rss" href="/atom.xml" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-rss"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="github" href="https://github.com/kinglaw1204" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-github"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="oschina" href="https://my.oschina.net/luozhou" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-oschina"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="juejin" href="https://juejin.im/user/5b0261e2518825426b277d47" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-juejin"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="email" href="mailto:kinglaw1204@gmail.com" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-email"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=469183326&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(3)</small></div></li>
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    </div>
+    <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="3">
+<input type="hidden" id="yelog_site_word_count" value="8.1k">
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://luozhou.top/">匠人小站</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode === 13){return false;}">
+        <input id="local-search-input" class="search" type="text" placeholder="Search..." />
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a class="color4">Java，字节码</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a  class=""
+           href="/2020/02/27/%E4%BD%A0%E5%86%99%E7%9A%84Java%E5%AF%B9%E8%B1%A1%E7%A9%B6%E7%AB%9F%E5%8D%A0%E5%A4%9A%E5%B0%91%E5%86%85%E5%AD%98%EF%BC%9F/"
+           data-tag=""
+           data-author="" >
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class=""
+           href="/2020/01/21/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/"
+           data-tag=""
+           data-author="" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class=""
+           href="/2019/12/30/%E4%BB%8E1-1-2%E6%9D%A5%E7%90%86%E8%A7%A3Java%E5%AD%97%E8%8A%82%E7%A0%81/"
+           data-tag="Java，字节码"
+           data-author="" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-从1-1-2来理解Java字节码" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">从1+1=2来理解Java字节码</h1>
+    
+    <div class="article-meta">
+        
+        
+        
+        
+        <span class="tag">
+            
+            <a class="color4">Java，字节码</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2020-02-28 08:37:49'>2019-12-30 08:36</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        <span>字数:2.5k</span>
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#背景"><span class="toc-text">背景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编译“1-1”代码"><span class="toc-text">编译“1+1”代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解析字节码"><span class="toc-text">解析字节码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><img src="https://cdn.pixabay.com/photo/2019/12/18/20/04/fantasy-4704796_1280.jpg" alt=""></p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>前不久《深入理解Java虚拟机》第三版发布了，赶紧买来看了看新版的内容，这本书更新了很多新版本虚拟机的内容，还对以前的部分内容进行了重构，还是值得去看的。本着复习和巩固的态度，我决定来编译一个简单的类文件来分析Java的字节码内容，来帮助理解和巩固Java字节码知识，希望也对阅读本文的你有所帮助。</p>
+<blockquote>
+<p>说明：本次采用的环境是OpenJdk12</p>
+</blockquote>
+<h2 id="编译“1-1”代码"><a href="#编译“1-1”代码" class="headerlink" title="编译“1+1”代码"></a>编译“1+1”代码</h2><p>首先我们需要写个简单的小程序，1+1的程序，学习就要从最简单的1+1开始，代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">package top.luozhou.test;</span><br><span class="line"></span><br><span class="line">&#x2F;**</span><br><span class="line"> * @description:</span><br><span class="line"> * @author: luozhou</span><br><span class="line"> * @create: 2019-12-25 21:28</span><br><span class="line"> **&#x2F;</span><br><span class="line">public class TestJava &#123;</span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        int a&#x3D;1+1;</span><br><span class="line">        System.out.println(a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>写好java类文件后，首先执行命令<code>javac TestJava.java</code> 编译类文件，生成<code>TestJava.class</code>。<br>然后执行反编译命令<code>javap -verbose TestJava</code>，字节码结果显示如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">  Compiled from &quot;TestJava.java&quot;</span><br><span class="line">public class top.luozhou.test.TestJava</span><br><span class="line">  minor version: 0</span><br><span class="line">  major version: 56</span><br><span class="line">  flags: ACC_PUBLIC, ACC_SUPER</span><br><span class="line">Constant pool:</span><br><span class="line">   #1 &#x3D; Methodref          #5.#14         &#x2F;&#x2F; java&#x2F;lang&#x2F;Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">   #2 &#x3D; Fieldref           #15.#16        &#x2F;&#x2F; java&#x2F;lang&#x2F;System.out:Ljava&#x2F;io&#x2F;PrintStream;</span><br><span class="line">   #3 &#x3D; Methodref          #17.#18        &#x2F;&#x2F; java&#x2F;io&#x2F;PrintStream.println:(I)V</span><br><span class="line">   #4 &#x3D; Class              #19            &#x2F;&#x2F; top&#x2F;luozhou&#x2F;test&#x2F;TestJava</span><br><span class="line">   #5 &#x3D; Class              #20            &#x2F;&#x2F; java&#x2F;lang&#x2F;Object</span><br><span class="line">   #6 &#x3D; Utf8               &lt;init&gt;</span><br><span class="line">   #7 &#x3D; Utf8               ()V</span><br><span class="line">   #8 &#x3D; Utf8               Code</span><br><span class="line">   #9 &#x3D; Utf8               LineNumberTable</span><br><span class="line">  #10 &#x3D; Utf8               main</span><br><span class="line">  #11 &#x3D; Utf8               ([Ljava&#x2F;lang&#x2F;String;)V</span><br><span class="line">  #12 &#x3D; Utf8               SourceFile</span><br><span class="line">  #13 &#x3D; Utf8               TestJava.java</span><br><span class="line">  #14 &#x3D; NameAndType        #6:#7          &#x2F;&#x2F; &quot;&lt;init&gt;&quot;:()V</span><br><span class="line">  #15 &#x3D; Class              #21            &#x2F;&#x2F; java&#x2F;lang&#x2F;System</span><br><span class="line">  #16 &#x3D; NameAndType        #22:#23        &#x2F;&#x2F; out:Ljava&#x2F;io&#x2F;PrintStream;</span><br><span class="line">  #17 &#x3D; Class              #24            &#x2F;&#x2F; java&#x2F;io&#x2F;PrintStream</span><br><span class="line">  #18 &#x3D; NameAndType        #25:#26        &#x2F;&#x2F; println:(I)V</span><br><span class="line">  #19 &#x3D; Utf8               top&#x2F;luozhou&#x2F;test&#x2F;TestJava</span><br><span class="line">  #20 &#x3D; Utf8               java&#x2F;lang&#x2F;Object</span><br><span class="line">  #21 &#x3D; Utf8               java&#x2F;lang&#x2F;System</span><br><span class="line">  #22 &#x3D; Utf8               out</span><br><span class="line">  #23 &#x3D; Utf8               Ljava&#x2F;io&#x2F;PrintStream;</span><br><span class="line">  #24 &#x3D; Utf8               java&#x2F;io&#x2F;PrintStream</span><br><span class="line">  #25 &#x3D; Utf8               println</span><br><span class="line">  #26 &#x3D; Utf8               (I)V</span><br><span class="line">&#123;</span><br><span class="line">  public top.luozhou.test.TestJava();</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC</span><br><span class="line">    Code:</span><br><span class="line">      stack&#x3D;1, locals&#x3D;1, args_size&#x3D;1</span><br><span class="line">         0: aload_0</span><br><span class="line">         1: invokespecial #1                  &#x2F;&#x2F; Method java&#x2F;lang&#x2F;Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">         4: return</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 8: 0</span><br><span class="line"></span><br><span class="line">  public static void main(java.lang.String[]);</span><br><span class="line">    descriptor: ([Ljava&#x2F;lang&#x2F;String;)V</span><br><span class="line">    flags: ACC_PUBLIC, ACC_STATIC</span><br><span class="line">    Code:</span><br><span class="line">      stack&#x3D;2, locals&#x3D;2, args_size&#x3D;1</span><br><span class="line">         0: iconst_2</span><br><span class="line">         1: istore_1</span><br><span class="line">         2: getstatic     #2                  &#x2F;&#x2F; Field java&#x2F;lang&#x2F;System.out:Ljava&#x2F;io&#x2F;PrintStream;</span><br><span class="line">         5: iload_1</span><br><span class="line">         6: invokevirtual #3                  &#x2F;&#x2F; Method java&#x2F;io&#x2F;PrintStream.println:(I)V</span><br><span class="line">         9: return</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 10: 0</span><br><span class="line">        line 11: 2</span><br><span class="line">        line 12: 9</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解析字节码"><a href="#解析字节码" class="headerlink" title="解析字节码"></a>解析字节码</h2><p><strong>1.基础信息</strong></p>
+<p>上述结果删除了部分不影响解析的冗余信息，接下来我们便来解析字节码的结果。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">minor version: 0 次版本号，为0表示未使用</span><br><span class="line">major version: 56 主版本号，56表示jdk12，表示只能运行在jdk12版本以及之后的虚拟机中</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flags: ACC_PUBLIC, ACC_SUPER</span><br></pre></td></tr></table></figure>
+<p><code>ACC_PUBLIC</code>:这就是一个是否是public类型的访问标志。</p>
+<p><code>ACC_SUPER</code>: 这个falg是为了解决通过 <code>invokespecial</code> 指令调用 super 方法的问题。可以将它理解成 Java 1.0.2 的一个缺陷补丁，只有通过这样它才能正确找到 super 类方法。从 Java 1.0.2 开始，编译器始终会在字节码中生成 ACC_SUPER 访问标识。感兴趣的同学可以点击<a href="https://bugs.openjdk.java.net/browse/JDK-6527033" target="_blank" rel="noopener">这里</a>来了解更多。</p>
+<p><strong>2.常量池</strong></p>
+<p>接下来，我们将要分析常量池,你也可以对照上面整体的字节码来理解。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#1 &#x3D; Methodref          #5.#14         &#x2F;&#x2F; java&#x2F;lang&#x2F;Object.&quot;&lt;init&gt;&quot;:()V</span><br></pre></td></tr></table></figure>
+<p>这是一个方法引用，这里的<code>#5</code>表示索引值，然后我们可以发现索引值为5的字节码如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#5 &#x3D; Class              #20            &#x2F;&#x2F; java&#x2F;lang&#x2F;Object</span><br></pre></td></tr></table></figure>
+<p>它表示这是一个<code>Object</code>类，同理<code>#14</code>指向的是一个<code>&quot;&lt;init&gt;&quot;:()V</code>表示引用的是初始化方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">#2 &#x3D; Fieldref           #15.#16        &#x2F;&#x2F; java&#x2F;lang&#x2F;System.out:Ljava&#x2F;io&#x2F;PrintStream;</span><br></pre></td></tr></table></figure>
+<p>上面这段表示是一个字段引用，同样引用了<code>#15</code>和<code>#16</code>,实际上引用的就是<code>java/lang/System</code>类中的<code>PrintStream</code>对象。其他的常量池分析思路是一样的，鉴于篇幅我就不一一说明了，只列下其中的几个关键类型和信息。</p>
+<p><code>NameAndType</code>:这个表示是名称和类型的常量表，可以指向方法名称或者字段的索引，在上面的字节码中都是表示的实际的方法。</p>
+<p><code>Utf8</code>：<strong>我们经常使用的是字符编码，但是这个不是只有字符编码的意思</strong>，它表示一种字符编码是<code>Utf8</code>的字符串。它是虚拟机中最常用的表结构，你可以理解为它可以描述方法，字段，类等信息。<br>比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#4 &#x3D; Class              #19 </span><br><span class="line">#19 &#x3D; Utf8               top&#x2F;luozhou&#x2F;test&#x2F;TestJava</span><br></pre></td></tr></table></figure>
+<p>这里表示<code>#4</code>这个索引下是一个类，然后指向的类是<code>#19</code>,<code>#19</code>是一个<code>Utf8</code>表，最终存放的是<code>top/luozhou/test/TestJava</code>,那么这样一连接起来就可以知道<code>#4</code>位置引用的类是<code>top/luozhou/test/TestJava</code>了。</p>
+<p><strong>3.构造方法信息</strong></p>
+<p>接下来，我们分析下构造方法的字节码，我们知道，一个类初始化的时候最先执行它的构造方法，如果你没有写构造方法，系统会默认给你添加一个无参的构造方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public top.luozhou.test.TestJava();</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC</span><br><span class="line">    Code:</span><br><span class="line">      stack&#x3D;1, locals&#x3D;1, args_size&#x3D;1</span><br><span class="line">         0: aload_0</span><br><span class="line">         1: invokespecial #1                  &#x2F;&#x2F; Method java&#x2F;lang&#x2F;Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">         4: return</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 8: 0</span><br></pre></td></tr></table></figure>
+<p><code>descriptor: ()V</code> :表示这是一个没有返回值的方法。</p>
+<p><code>flags: ACC_PUBLIC</code>:是公共方法。</p>
+<p><code>stack=1, locals=1, args_size=1</code> :表示栈中的数量为1，局部变量表中的变量为1，调用参数也为1。</p>
+<p>这里为什么都是1呢？这不是默认的构造方法吗？哪来的参数？其实Java语言有一个潜规则：<strong>在任何实例方法里面都可以通过<code>this</code>来访问到此方法所属的对象</strong>。而这种机制的实现就是通过Java编译器在编译的时候作为入参传入到方法中了，熟悉<code>python</code>语言的同学肯定会知道，在<code>python</code>中定义一个方法总会传入一个<code>self</code>的参数,这也是传入此实例的引用到方法内部，Java只是把这种机制后推到编译阶段完成而已。所以，这里的1都是指<code>this</code>这个参数而已。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">     0: aload_0</span><br><span class="line">     1: invokespecial #1                  &#x2F;&#x2F; Method java&#x2F;lang&#x2F;Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">     4: return</span><br><span class="line">LineNumberTable:</span><br><span class="line">    line 8: 0</span><br></pre></td></tr></table></figure>
+<p>经过上面这个分析对于这个构造方法表达的意思也就很清晰了。</p>
+<p><code>aload_0</code>:表示把局部变量表中的第一个变量加载到栈中，也就是<code>this</code>。</p>
+<p><code>invokespecial</code>:直接调用初始化方法。</p>
+<p><code>return</code>:调用完毕方法结束。</p>
+<p><code>LineNumberTable:</code>这是一个行数的表，用来记录字节码的偏移量和代码行数的映射关系。<code>line 8: 0</code>表示，源码中第8行对应的就是偏移量<code>0</code>的字节码，因为是默认的构造方法，所以这里并无法直观体现出来。</p>
+<p>另外这里会执行<code>Object</code>的构造方法是因为，<code>Object</code>是所有类的父类，子类的构造要先构造父类的构造方法。</p>
+<p><strong>4.main方法信息</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public static void main(java.lang.String[]);</span><br><span class="line">    descriptor: ([Ljava&#x2F;lang&#x2F;String;)V</span><br><span class="line">    flags: ACC_PUBLIC, ACC_STATIC</span><br><span class="line">    Code:</span><br><span class="line">      stack&#x3D;2, locals&#x3D;2, args_size&#x3D;1</span><br><span class="line">         0: iconst_2</span><br><span class="line">         1: istore_1</span><br><span class="line">         2: getstatic     #2                  &#x2F;&#x2F; Field java&#x2F;lang&#x2F;System.out:Ljava&#x2F;io&#x2F;PrintStream;</span><br><span class="line">         5: iload_1</span><br><span class="line">         6: invokevirtual #3                  &#x2F;&#x2F; Method java&#x2F;io&#x2F;PrintStream.println:(I)V</span><br><span class="line">         9: return</span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line 10: 0</span><br><span class="line">        line 11: 2</span><br><span class="line">        line 12: 9</span><br></pre></td></tr></table></figure>
+<p>有了之前构造方法的分析，我们接下来分析<code>main</code>方法也会熟悉很多，重复的我就略过了，这里重点分析<code>code</code>部分。</p>
+<p><code>stack=2, locals=2, args_size=1</code>:这里的栈和局部变量表为2，参数还是为1。这是为什么呢？因为<code>main</code>方法中声明了一个变量<code>a</code>,所以局部变量表要加一个，栈也是，所以他们是2。那为什么<code>args_size</code>还是1呢？你不是说默认会把<code>this</code>传入的吗？应该是2啊。<strong>注意：之前说的是在任何实例方法中，而这个main方法是一个静态方法，静态方法直接可以通过类+方法名访问，并不需要实例对象，所以这里就没必要传入了</strong>。</p>
+<p><code>0: iconst_2</code>:将<code>int</code>类型2推送到栈顶。</p>
+<p><code>1: istore_1</code>:将栈顶<code>int</code>类型数值存入第二个本地变量。</p>
+<p><code>2: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;</code>:获取<code>PrintStream</code>类。</p>
+<p><code>5: iload_1</code>: 把第二个<code>int</code>型本地变量推送到栈顶。</p>
+<p><code>6: invokevirtual #3                  // Method java/io/PrintStream.println:(I)V</code>:调用<code>println</code>方法。</p>
+<p><code>9: return</code>:调用完毕结束方法。</p>
+<p>这里的<code>LineNumberTable</code>是有源码的，我们可以对照下我前面描述是否正确：<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/1+1%E7%90%86%E8%A7%A3%E5%AD%97%E8%8A%82%E7%A0%81/sourceCode.png?raw=true" alt=""></p>
+<p><code>line 10: 0</code>: 第10行表示<code>0: iconst_2</code>字节码，这里我们发现编译器直接给我们计算好了把2推送到栈顶了。</p>
+<p><code>line 11: 2</code>:第11行源码对应的是<code>2: getstatic</code> 获取输出的静态类<code>PrintStream</code>。</p>
+<p><code>line 12: 9</code>:12行源码对应的是<code>return</code>，表示方法结束。</p>
+<p>这里我也画了一个动态图片来演示<code>main</code>方法执行的过程，希望能够帮助你理解：<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/1+1%E7%90%86%E8%A7%A3%E5%AD%97%E8%8A%82%E7%A0%81/main%E6%96%B9%E6%B3%95gif.gif?raw=true" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇文章我从1+1的的源码编译开始，分析了生成后的Java字节码，包括类的基本信息，常量池，方法调用过程等，通过这些分析，我们对Java字节码有了比较基本的了解，也知道了Java编译器会把优化手段通过编译好的字节码体现出来，比如我们的1+1=2，字节码字节赋值一个2给变量，而不是进行加法运算，从而优化了我们的代码，提搞了执行效率。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="https://bugs.openjdk.java.net/browse/JDK-6527033" target="_blank" rel="noopener">https://bugs.openjdk.java.net/browse/JDK-6527033</a></li>
+</ol>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a  class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>从1+1=2来理解Java字节码</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">2.5k</span></p>
+    <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
+    <p><span class="copy-title">发布时间:</span>2019-12-30, 08:36:40</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-28, 08:37:49</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/12/30/%E4%BB%8E1-1-2%E6%9D%A5%E7%90%86%E8%A7%A3Java%E5%AD%97%E8%8A%82%E7%A0%81/" title="从1+1=2来理解Java字节码">http://luozhou.top/2019/12/30/%E4%BB%8E1-1-2%E6%9D%A5%E7%90%86%E8%A7%A3Java%E5%AD%97%E8%8A%82%E7%A0%81/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2016-2020 木木匠（罗洲）</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" ></a>
+
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close"  onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="/js/jquery.pjax.js?v=1：.0.1" ></script>
+
+<script src="/js/script.js?v=1：.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['#Java，字节码',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: ;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    
+    .nav {
+        width: 542px;
+    }
+    .nav.fullscreen {
+        margin-left: -542px;
+    }
+    .nav-left {
+        width: 120px;
+    }
+    
+    
+    @media screen and (max-width: 1468px) {
+        .nav {
+            width: 492px;
+        }
+        .nav.fullscreen {
+            margin-left: -492px;
+        }
+        .nav-left {
+            width: 100px;
+        }
+    }
+    
+    
+    @media screen and (max-width: 1024px) {
+        .nav {
+            width: 492px;
+            margin-left: -492px
+        }
+        .nav.fullscreen {
+            margin-left: 0;
+        }
+        .nav .hide-list.fullscreen {
+            left: 492px
+        }
+    }
+    
+    @media screen and (max-width: 426px) {
+        .nav {
+            width: 100%;
+        }
+        .nav-left {
+            width: 100%;
+        }
+    }
+    
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("https://i.loli.net/2019/07/22/5d3521411f3f169375.png");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+</style>
+
+
+
+
+
+
+
+</html>
