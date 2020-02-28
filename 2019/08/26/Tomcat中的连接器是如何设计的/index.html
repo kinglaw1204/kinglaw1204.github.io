@@ -34,7 +34,7 @@
 
 <link href="/css/style.css?v=1：.0.1" rel="stylesheet">
 
-<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+<link href="/css/hl_theme/github.css?v=1：.0.1" rel="stylesheet">
 
 <link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
 <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -169,7 +169,7 @@
     <div class="friends-content">
         <ul>
             
-            <li><a target="_blank" href="http://luozhou.top/">匠人小站</a></li>
+            <li><a target="_blank" href="http://luozhou.top/">匠人的小屋</a></li>
             
         </ul>
     </div>
@@ -290,7 +290,7 @@
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-02-28 08:48:02'>2019-08-26 08:47</time>
+        创建时间:<time class="date" title='更新时间: 2020-02-28 08:55:47'>2019-08-26 08:47</time>
         
     </div>
     <div class="article-meta">
@@ -309,6 +309,17 @@
             </span>
         </span>
         
+        
+        <span class="top-comment" title="跳转至评论区">
+            <a href="#comments">
+                评论:<span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </a>
+        </span>
         
     </div>
     
@@ -330,7 +341,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="上期回顾"><a href="#上期回顾" class="headerlink" title="上期回顾"></a>上期回顾</h2><p>上一篇文章《<a href="https://my.oschina.net/luozhou/blog/3088908" target="_blank" rel="noopener">Tomcat在SpringBoot中是如何启动的</a>》从main方法启动说起，窥探了SpringBoot是如何启动Tomcat的，在分析Tomcat中我们重点提到了，Tomcat主要包括2个组件，连接器（Connector）和容器（Container）以及他们的内部结构图，那么今天我们来分析下Tomcat中的连接器是怎么设计的以及它的作用是什么。</p>
+        <h2 id="上期回顾"><a href="#上期回顾" class="headerlink" title="上期回顾"></a>上期回顾</h2><p>上一篇文章《<a href="[http://www.luozhou.top/2020/02/28/Tomcat%E5%9C%A8SpringBoot%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E5%90%AF%E5%8A%A8%E7%9A%84/](http://www.luozhou.top/2020/02/28/Tomcat在SpringBoot中是如何启动的/)">Tomcat在SpringBoot中是如何启动的</a>》从main方法启动说起，窥探了SpringBoot是如何启动Tomcat的，在分析Tomcat中我们重点提到了，Tomcat主要包括2个组件，连接器（Connector）和容器（Container）以及他们的内部结构图，那么今天我们来分析下Tomcat中的连接器是怎么设计的以及它的作用是什么。</p>
 <blockquote>
 <p>说明：本文tomcat版本是9.0.21，不建议零基础读者阅读。</p>
 </blockquote>
@@ -425,13 +436,34 @@
     <p><span class="copy-title">文章字数:</span><span class="post-count">3.7k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
     <p><span class="copy-title">发布时间:</span>2019-08-26, 08:47:10</p>
-    <p><span class="copy-title">最后更新:</span>2020-02-28, 08:48:02</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-28, 08:55:47</p>
     <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/08/26/Tomcat%E4%B8%AD%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%99%A8%E6%98%AF%E5%A6%82%E4%BD%95%E8%AE%BE%E8%AE%A1%E7%9A%84/" title="Tomcat中的连接器是如何设计的">http://luozhou.top/2019/08/26/Tomcat%E4%B8%AD%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%99%A8%E6%98%AF%E5%A6%82%E4%BD%95%E8%AE%BE%E8%AE%A1%E7%9A%84/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
     </p>
 </div>
 
+
+
+    <div id="comments"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script type="text/javascript">
+    $.getScript('/js/gitalk.js', function () {
+        var gitalk = new Gitalk({
+            clientID: 'd21581319a526c348f98',
+            clientSecret: 'd49d318af703ae7a49e63519588b2c0275c1d15c',
+            repo: 'kinglaw1204.github.io',
+            owner: 'kinglaw1204',
+            admin: ['kinglaw1204'],
+            id: decodeURI(location.pathname),
+            distractionFreeMode: 'true',
+            language: 'zh-CN',
+            perPage: parseInt('10',10)
+        })
+        gitalk.render('comments')
+    })
+</script>
 
 
 
@@ -701,6 +733,16 @@
     }
     
 
+    
+    .post .pjax article :not(pre) > code {
+        color: #24292e;
+        font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+        background-color: rgba(27,31,35,.05);
+        border-radius: 3px;
+        font-size: 85%;
+        margin: 0;
+        padding: .2em .4em;
+    }
     
 </style>
 
