@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tomcat中的连接器是如何设计的 | 匠人的小屋</title>
+  <meta name="keywords" content=" Tomcat ">
+  <meta name="description" content="Tomcat中的连接器是如何设计的 | 匠人的小屋">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:type" content="article">
+<meta property="og:title" content="西藏旅游⊙准备篇">
+<meta property="og:url" content="http://luozhou.top/2020/02/29/Tibet-Travel-Guide/index.html">
+<meta property="og:site_name" content="匠人的小屋">
+<meta property="og:description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-02-29T12:55:33.000Z">
+<meta property="article:modified_time" content="2020-02-29T13:19:42.462Z">
+<meta property="article:author" content="木木匠">
+<meta property="article:tag" content="西藏">
+<meta property="article:tag" content="攻略">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1：.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1：.0.1" ></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js" ></script>
+
+<script src="/js/iconfont.js?v=1：.0.1" ></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value="">
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>木木匠</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="rss" href="/atom.xml" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-rss"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="github" href="https://github.com/kinglaw1204" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-github"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="oschina" href="https://my.oschina.net/luozhou" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-oschina"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="juejin" href="https://juejin.im/user/5b0261e2518825426b277d47" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-juejin"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="email" href="mailto:kinglaw1204@gmail.com" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-email"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=469183326&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+<a class="more-menus">更多菜单</a>
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(10)</small></div></li>
+    
+        
+            
+            <li><div data-rel="Java">Java<small>(3)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Tomcat">Tomcat<small>(4)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Docker">Docker<small>(2)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="旅游">旅游<small>(1)</small></div>
+                
+            </li>
+            
+        
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+    </div>
+    <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="10">
+<input type="hidden" id="yelog_site_word_count" value="27.5k">
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://luozhou.top/">匠人的小屋</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode === 13){return false;}">
+        <input id="local-search-input" class="search" type="text" placeholder="Search..." />
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Tomcat</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Docker</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color5">Java</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Consul</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">Jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color1">SpringBoot</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">字节码</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">西藏</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">攻略</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a id="top" class="Java "
+           href="/2020/02/27/java-code-used-memory/"
+           data-tag="Java,Jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class="旅游 "
+           href="/2020/02/29/Tibet-Travel-Guide/"
+           data-tag="西藏,攻略"
+           data-author="今心" >
+            <span class="post-title" title="西藏旅游⊙准备篇">西藏旅游⊙准备篇</span>
+            <span class="post-date" title="2020-02-29 20:55:33">2020/02/29</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2020/02/28/tomcat-synchrony/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat是如何实现异步Servlet的">Tomcat是如何实现异步Servlet的</span>
+            <span class="post-date" title="2020-02-28 08:43:24">2020/02/28</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2020/01/21/docker-islotion/"
+           data-tag="Docker"
+           data-author="木木匠" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/12/30/analyse-java-code/"
+           data-tag="字节码"
+           data-author="木木匠" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2019/12/04/deploy-consul-docker/"
+           data-tag="Docker,Consul"
+           data-author="木木匠" >
+            <span class="post-title" title="Consul集群版容器化部署与应用集成">Consul集群版容器化部署与应用集成</span>
+            <span class="post-date" title="2019-12-04 08:40:49">2019/12/04</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/09/09/Tomcat-container/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的容器是如何处理请求的">Tomcat中的容器是如何处理请求的</span>
+            <span class="post-date" title="2019-09-09 08:45:24">2019/09/09</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/26/Tomcat-connector/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
+            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/12/Tomcat-start-in-springboot/"
+           data-tag="Tomcat,SpringBoot"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat在SpringBoot中是如何启动的">Tomcat在SpringBoot中是如何启动的</span>
+            <span class="post-date" title="2019-08-12 08:51:24">2019/08/12</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/04/28/jvm-gc-01/"
+           data-tag="jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
+            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-Tomcat-connector" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">Tomcat中的连接器是如何设计的</h1>
+    
+    <div class="article-meta">
+        
+        
+        <span class="author"><a>木木匠</a></span>
+        
+        
+        <span class="book">
+            
+                <a  data-rel="Tomcat">Tomcat</a>
+            
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a class="color2">Tomcat</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2020-02-29 21:07:24'>2019-08-26 08:47</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        <span>字数:3.3k</span>
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+        <span class="top-comment" title="跳转至评论区">
+            <a href="#comments">
+                评论:<span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </a>
+        </span>
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#上期回顾"><span class="toc-text">上期回顾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从连接器（Connector）源码说起"><span class="toc-text">从连接器（Connector）源码说起</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于生命周期"><span class="toc-text">关于生命周期</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从生命周期探索连接器"><span class="toc-text">从生命周期探索连接器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="上期回顾"><a href="#上期回顾" class="headerlink" title="上期回顾"></a>上期回顾</h2><p>上一篇文章《<a href="http://localhost:4000/2019/08/12/Tomcat-start-in-springboot/" target="_blank" rel="noopener">Tomcat在SpringBoot中是如何启动的</a>》从main方法启动说起，窥探了SpringBoot是如何启动Tomcat的，在分析Tomcat中我们重点提到了，Tomcat主要包括2个组件，连接器（Connector）和容器（Container）以及他们的内部结构图，那么今天我们来分析下Tomcat中的连接器是怎么设计的以及它的作用是什么。</p>
+<blockquote>
+<p>说明：本文tomcat版本是9.0.21，不建议零基础读者阅读。</p>
+</blockquote>
+<h2 id="从连接器（Connector）源码说起"><a href="#从连接器（Connector）源码说起" class="headerlink" title="从连接器（Connector）源码说起"></a>从连接器（Connector）源码说起</h2><p>既然是来解析连接器（Connector），那么我们直接从源码入手，后面所有源码我会剔除不重要部分，所以会忽略大部分源码细节，只关注流程。源码如下（高能预警，大量代码）：</p>
+<pre><code>public class Connector extends LifecycleMBeanBase  {
+    public Connector() {
+        this(&quot;org.apache.coyote.http11.Http11NioProtocol&quot;);
+    }
+
+
+    public Connector(String protocol) {
+        boolean aprConnector = AprLifecycleListener.isAprAvailable() &amp;&amp;
+                AprLifecycleListener.getUseAprConnector();
+
+        if (&quot;HTTP/1.1&quot;.equals(protocol) || protocol == null) {
+            if (aprConnector) {
+                protocolHandlerClassName = &quot;org.apache.coyote.http11.Http11AprProtocol&quot;;
+            } else {
+                protocolHandlerClassName = &quot;org.apache.coyote.http11.Http11NioProtocol&quot;;
+            }
+        } else if (&quot;AJP/1.3&quot;.equals(protocol)) {
+            if (aprConnector) {
+                protocolHandlerClassName = &quot;org.apache.coyote.ajp.AjpAprProtocol&quot;;
+            } else {
+                protocolHandlerClassName = &quot;org.apache.coyote.ajp.AjpNioProtocol&quot;;
+            }
+        } else {
+            protocolHandlerClassName = protocol;
+        }
+
+        // Instantiate protocol handler
+        ProtocolHandler p = null;
+        try {
+            Class&lt;?&gt; clazz = Class.forName(protocolHandlerClassName);
+            p = (ProtocolHandler) clazz.getConstructor().newInstance();
+        } catch (Exception e) {
+            log.error(sm.getString(
+                    &quot;coyoteConnector.protocolHandlerInstantiationFailed&quot;), e);
+        } finally {
+            this.protocolHandler = p;
+        }
+
+        // Default for Connector depends on this system property
+        setThrowOnFailure(Boolean.getBoolean(&quot;org.apache.catalina.startup.EXIT_ON_INIT_FAILURE&quot;));
+    }
+
+</code></pre><p>我们来看看Connector的构造方法，其实只做了一件事情，就是根据协议设置对应的<code>ProtocolHandler</code>,根据名称我们知道，这是协议处理类，所以连接器内部的一个重要子模块就是<code>ProtocolHandler</code>。</p>
+<h2 id="关于生命周期"><a href="#关于生命周期" class="headerlink" title="关于生命周期"></a>关于生命周期</h2><p>我们看到<code>Connector</code>继承了<code>LifecycleMBeanBase</code>，我们来看看<code>Connector</code>的最终继承关系：</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/tomcat-connector/extend.png?raw=true" alt=""></p>
+<p>我们看到最终实现的是<code>Lifecycle</code>接口,我们看看这个接口是何方神圣。我把其接口的注释拿下来解释下</p>
+<pre><code>/**
+ * Common interface for component life cycle methods.  Catalina components
+ * may implement this interface (as well as the appropriate interface(s) for
+ * the functionality they support) in order to provide a consistent mechanism
+ * to start and stop the component.
+ *            start()
+ *  -----------------------------
+ *  |                           |
+ *  | init()                    |
+ * NEW -»-- INITIALIZING        |
+ * | |           |              |     ------------------«-----------------------
+ * | |           |auto          |     |                                        |
+ * | |          \|/    start() \|/   \|/     auto          auto         stop() |
+ * | |      INITIALIZED --»-- STARTING_PREP --»- STARTING --»- STARTED --»---  |
+ * | |         |                                                            |  |
+ * | |destroy()|                                                            |  |
+ * | --»-----«--    ------------------------«--------------------------------  ^
+ * |     |          |                                                          |
+ * |     |         \|/          auto                 auto              start() |
+ * |     |     STOPPING_PREP ----»---- STOPPING ------»----- STOPPED -----»-----
+ * |    \|/                               ^                     |  ^
+ * |     |               stop()           |                     |  |
+ * |     |       --------------------------                     |  |
+ * |     |       |                                              |  |
+ * |     |       |    destroy()                       destroy() |  |
+ * |     |    FAILED ----»------ DESTROYING ---«-----------------  |
+ * |     |                        ^     |                          |
+ * |     |     destroy()          |     |auto                      |
+ * |     --------»-----------------    \|/                         |
+ * |                                 DESTROYED                     |
+ * |                                                               |
+ * |                            stop()                             |
+ * ----»-----------------------------»------------------------------
+ *
+ * Any state can transition to FAILED.
+ *
+ * Calling start() while a component is in states STARTING_PREP, STARTING or
+ * STARTED has no effect.
+ *
+ * Calling start() while a component is in state NEW will cause init() to be
+ * called immediately after the start() method is entered.
+ *
+ * Calling stop() while a component is in states STOPPING_PREP, STOPPING or
+ * STOPPED has no effect.
+ *
+ * Calling stop() while a component is in state NEW transitions the component
+ * to STOPPED. This is typically encountered when a component fails to start and
+ * does not start all its sub-components. When the component is stopped, it will
+ * try to stop all sub-components - even those it didn&#39;t start.
+ *
+ * Attempting any other transition will throw {@link LifecycleException}.
+ *
+ * &lt;/pre&gt;
+ * The {@link LifecycleEvent}s fired during state changes are defined in the
+ * methods that trigger the changed. No {@link LifecycleEvent}s are fired if the
+ * attempted transition is not valid.</code></pre><p>这段注释翻译就是，这个接口是提供给组件声明周期管理的，并且提供了声明周期流转图。这里我们只需要知道正常流程即可：</p>
+<blockquote>
+<p>New—&gt;Init()—-&gt;Start()—-&gt;Stop()—&gt;Destory()</p>
+</blockquote>
+<h2 id="从生命周期探索连接器"><a href="#从生命周期探索连接器" class="headerlink" title="从生命周期探索连接器"></a>从生命周期探索连接器</h2><p>根据上面的生命周期说明，我们可以知道连接器（<code>Connector</code>）就是按照如此的声明周期管理的，所以我们找到了线索，所以连接器肯定会先初始化然后再启动。我们查看其<code>initInternal()</code>方法可以知道连接器初始化做了什么事情，源码如下：</p>
+<pre><code>    @Override
+    protected void initInternal() throws LifecycleException {
+
+        super.initInternal();
+
+        if (protocolHandler == null) {
+            throw new LifecycleException(
+                    sm.getString(&quot;coyoteConnector.protocolHandlerInstantiationFailed&quot;));
+        }
+
+        // Initialize adapter
+        adapter = new CoyoteAdapter(this);
+        protocolHandler.setAdapter(adapter);
+        if (service != null) {
+            protocolHandler.setUtilityExecutor(service.getServer().getUtilityExecutor());
+        }
+
+        // Make sure parseBodyMethodsSet has a default
+        if (null == parseBodyMethodsSet) {
+            setParseBodyMethods(getParseBodyMethods());
+        }
+
+        if (protocolHandler.isAprRequired() &amp;&amp; !AprLifecycleListener.isInstanceCreated()) {
+            throw new LifecycleException(sm.getString(&quot;coyoteConnector.protocolHandlerNoAprListener&quot;,
+                    getProtocolHandlerClassName()));
+        }
+        if (protocolHandler.isAprRequired() &amp;&amp; !AprLifecycleListener.isAprAvailable()) {
+            throw new LifecycleException(sm.getString(&quot;coyoteConnector.protocolHandlerNoAprLibrary&quot;,
+                    getProtocolHandlerClassName()));
+        }
+        if (AprLifecycleListener.isAprAvailable() &amp;&amp; AprLifecycleListener.getUseOpenSSL() &amp;&amp;
+                protocolHandler instanceof AbstractHttp11JsseProtocol) {
+            AbstractHttp11JsseProtocol&lt;?&gt; jsseProtocolHandler =
+                    (AbstractHttp11JsseProtocol&lt;?&gt;) protocolHandler;
+            if (jsseProtocolHandler.isSSLEnabled() &amp;&amp;
+                    jsseProtocolHandler.getSslImplementationName() == null) {
+                // OpenSSL is compatible with the JSSE configuration, so use it if APR is available
+                jsseProtocolHandler.setSslImplementationName(OpenSSLImplementation.class.getName());
+            }
+        }
+
+        try {
+            protocolHandler.init();
+        } catch (Exception e) {
+            throw new LifecycleException(
+                    sm.getString(&quot;coyoteConnector.protocolHandlerInitializationFailed&quot;), e);
+        }
+    }
+}</code></pre><p>根据上面源码，我们发现主要是处理<code>protocolHandler</code>并初始化它，同时我们注意到了<code>protocolHandler</code> 设置了一个适配器，我们看看这个适配器是做啥的，跟踪源码如下：</p>
+<pre><code>   /**
+     * The adapter, used to call the connector.
+     *
+     * @param adapter The adapter to associate
+     */
+    public void setAdapter(Adapter adapter);</code></pre><p>这个注释已经说的很直白了，这个适配器就是用来调用连接器的。我们再继续看看<code>protocolHandler</code>的初始化方法</p>
+<pre><code> /**
+     * Endpoint that provides low-level network I/O - must be matched to the
+     * ProtocolHandler implementation (ProtocolHandler using NIO, requires NIO
+     * Endpoint etc.).
+     */
+private final AbstractEndpoint&lt;S,?&gt; endpoint;
+
+public void init() throws Exception {
+        if (getLog().isInfoEnabled()) {
+            getLog().info(sm.getString(&quot;abstractProtocolHandler.init&quot;, getName()));
+            logPortOffset();
+        }
+
+        if (oname == null) {
+            // Component not pre-registered so register it
+            oname = createObjectName();
+            if (oname != null) {
+                Registry.getRegistry(null, null).registerComponent(this, oname, null);
+            }
+        }
+
+        if (this.domain != null) {
+            rgOname = new ObjectName(domain + &quot;:type=GlobalRequestProcessor,name=&quot; + getName());
+            Registry.getRegistry(null, null).registerComponent(
+                    getHandler().getGlobal(), rgOname, null);
+        }
+
+        String endpointName = getName();
+        endpoint.setName(endpointName.substring(1, endpointName.length()-1));
+        endpoint.setDomain(domain);
+
+        endpoint.init();
+    }</code></pre><p>这里出现了一个新的对象，<code>endpoint</code>,根据注释我们可以知道<code>endpoint</code>是用来处理网络IO的，而且必须匹配到指定的子类（比如Nio,就是NioEndPoint处理）。<code>endpoint.init()</code>实际上就是做一些网络的配置，然后就是初始化完毕了。根据我们上面的周期管理，我们知道<code>init()</code>后就是<code>start()</code>,所以我们查看<code>Connector</code>的<code>start()</code>源码：</p>
+<pre><code> protected void startInternal() throws LifecycleException {
+
+        // Validate settings before starting
+        if (getPortWithOffset() &lt; 0) {
+            throw new LifecycleException(sm.getString(
+                    &quot;coyoteConnector.invalidPort&quot;, Integer.valueOf(getPortWithOffset())));
+        }
+
+        setState(LifecycleState.STARTING);
+
+        try {
+            protocolHandler.start();
+        } catch (Exception e) {
+            throw new LifecycleException(
+                    sm.getString(&quot;coyoteConnector.protocolHandlerStartFailed&quot;), e);
+        }
+    }</code></pre><p>其实就是主要调用<code>protocolHandler.start()</code>方法，继续跟踪，为了方便表述，我会把接下来的代码统一放在一起说明，代码如下：</p>
+<pre><code>//1.类：AbstractProtocol implements ProtocolHandler,
+        MBeanRegistration
+ public void start() throws Exception {
+     // 省略部分代码
+    endpoint.start();
+    }
+
+//2. 类：AbstractEndPoint   
+public final void start() throws Exception {
+       // 省略部分代码
+        startInternal();
+    }
+ /**3.类：NioEndPoint extends AbstractJsseEndpoint&lt;NioChannel,SocketChannel&gt;
+     * Start the NIO endpoint, creating acceptor, poller threads.
+     */
+    @Override
+    public void startInternal() throws Exception {
+        //省略部分代码
+
+            // Start poller thread
+            poller = new Poller();
+            Thread pollerThread = new Thread(poller, getName() + &quot;-ClientPoller&quot;);
+            pollerThread.setPriority(threadPriority);
+            pollerThread.setDaemon(true);
+            pollerThread.start();
+
+            startAcceptorThread();
+        }
+    }</code></pre><p>到这里，其实整个启动代码就完成了，我们看到最后是在<code>NioEndPoint</code>创建了一个<code>Poller</code>,并且启动它，这里需要补充说明下，这里只是以NioEndPoint为示列，其实Tomcat 主要提供了三种实现，分别是<code>AprEndPoint</code>,<code>NioEndPoint</code>,<code>Nio2EndPoint</code>,这里表示了tomcat支持的I/O模型：</p>
+<blockquote>
+<p>APR:采用 Apache 可移植运行库实现,它根据不同操作系统，分别用c重写了大部分IO和系统线程操作模块,据说性能要比其他模式要好（未实测）。</p>
+</blockquote>
+<blockquote>
+<p>NIO：非阻塞 I/O </p>
+</blockquote>
+<blockquote>
+<p>NIO.2：异步 I/O</p>
+</blockquote>
+<p>上述代码主要是开启两个线程，一个是Poller,一个是开启Acceptor，既然是线程，核心的代码肯定是<code>run方法</code>，我们来查看源码，代码如下：</p>
+<pre><code>//4.类：Acceptor&lt;U&gt; implements Runnable
+ public void run() {
+ //省略了部分代码
+                U socket = null;
+                    socket = endpoint.serverSocketAccept();
+                // Configure the socket
+                if (endpoint.isRunning() &amp;&amp; !endpoint.isPaused()) {
+                    // setSocketOptions() will hand the socket off to
+                    // an appropriate processor if successful
+                    //核心逻辑
+                    if (!endpoint.setSocketOptions(socket)) {
+                        endpoint.closeSocket(socket);
+                    }
+                } else {
+                    endpoint.destroySocket(socket);
+                }
+
+        state = AcceptorState.ENDED;
+}
+//5.类：NioEndpoint
+protected boolean setSocketOptions(SocketChannel socket) {
+        // Process the connection
+        //省略部分代码
+        try {
+            // Disable blocking, polling will be used
+            socket.configureBlocking(false);
+            Socket sock = socket.socket();
+            socketProperties.setProperties(sock);
+
+
+            NioSocketWrapper socketWrapper = new NioSocketWrapper(channel, this);
+            channel.setSocketWrapper(socketWrapper);
+            socketWrapper.setReadTimeout(getConnectionTimeout());
+            socketWrapper.setWriteTimeout(getConnectionTimeout());
+            socketWrapper.setKeepAliveLeft(NioEndpoint.this.getMaxKeepAliveRequests());
+            socketWrapper.setSecure(isSSLEnabled());
+            //核心逻辑
+            poller.register(channel, socketWrapper);
+            return true;
+
+    }</code></pre><p>这里可以发现<code>Acceptor</code>主要就是接受<code>socket</code>,然后把它注册到<code>poller</code>中，我们继续看看是如何注册的。</p>
+<pre><code>/**6.类NioEndpoint
+         * Registers a newly created socket with the poller.
+         *
+         * @param socket    The newly created socket
+         * @param socketWrapper The socket wrapper
+         */
+        public void register(final NioChannel socket, final NioSocketWrapper socketWrapper) {
+            socketWrapper.interestOps(SelectionKey.OP_READ);//this is what OP_REGISTER turns into.
+            PollerEvent r = null;
+            if (eventCache != null) {
+                r = eventCache.pop();
+            }
+            if (r == null) {
+                r = new PollerEvent(socket, OP_REGISTER);
+            } else {
+                r.reset(socket, OP_REGISTER);
+            }
+            addEvent(r);
+        }
+/** 7.类：PollerEvent implements Runnable
+ public void run() {
+    //省略部分代码
+    socket.getIOChannel().register(socket.getSocketWrapper().getPoller().getSelector(), SelectionKey.OP_READ, socket.getSocketWrapper());
+        }</code></pre><p> 这里发现最终就是采用NIO模型把其注册到通道中。(这里涉及NIO网络编程知识，不了解的同学可以传送<a href="http://ifeve.com/java-nio-all/" target="_blank" rel="noopener">这里</a>)。那么注册完毕后，我们看看Poller做了什么事情。</p>
+<pre><code>*/        
+  /**8.类：NioEndPoint内部类 Poller implements Runnable
+  **/  
+  @Override
+        public void run() {
+            // Loop until destroy() is called
+            while (true) {
+                //省略部分代码
+
+                Iterator&lt;SelectionKey&gt; iterator =
+                    keyCount &gt; 0 ? selector.selectedKeys().iterator() : null;
+                // Walk through the collection of ready keys and dispatch
+                // any active event.
+                while (iterator != null &amp;&amp; iterator.hasNext()) {
+                    SelectionKey sk = iterator.next();
+                    NioSocketWrapper socketWrapper = (NioSocketWrapper) sk.attachment();
+                    // Attachment may be null if another thread has called
+                    // cancelledKey()
+                    if (socketWrapper == null) {
+                        iterator.remove();
+                    } else {
+                        iterator.remove();
+                        //sock处理
+                        processKey(sk, socketWrapper);
+                    }
+                }
+        //省略部分代码
+        }    </code></pre><p> 这个就是通过selector把之前注册的事件取出来，从而完成了调用。</p>
+<pre><code> //9.类： NioEndPoint内部类 Poller  implements Runnable     
+ protected void processKey(SelectionKey sk, NioSocketWrapper socketWrapper) {
+          //省略大部分代码
+            processSocket(socketWrapper, SocketEvent.OPEN_WRITE, true)
+
+ }
+
+ //10.类：AbstractEndPoint        
+ public boolean processSocket(SocketWrapperBase&lt;S&gt; socketWrapper,
+            SocketEvent event, boolean dispatch) {
+        //省略部分代码
+            Executor executor = getExecutor();
+            if (dispatch &amp;&amp; executor != null) {
+                executor.execute(sc);
+            } else {
+                sc.run();
+            }
+
+        return true;
+    }  
+ //11.类：SocketProcessorBase  implements Runnable   
+public final void run() {
+        synchronized (socketWrapper) {
+            // It is possible that processing may be triggered for read and
+            // write at the same time. The sync above makes sure that processing
+            // does not occur in parallel. The test below ensures that if the
+            // first event to be processed results in the socket being closed,
+            // the subsequent events are not processed.
+            if (socketWrapper.isClosed()) {
+                return;
+            }
+            doRun();
+        }
+    }
+
+//类：12.NioEndPoint   extends AbstractJsseEndpoint&lt;NioChannel,SocketChannel&gt; 
+protected void doRun() {
+        //省略部分代码
+                if (handshake == 0) {
+                    SocketState state = SocketState.OPEN;
+                    // Process the request from this socket
+                    if (event == null) {
+                        state = getHandler().process(socketWrapper, SocketEvent.OPEN_READ);
+                    } else {
+                        state = getHandler().process(socketWrapper, event);
+                    }
+                    if (state == SocketState.CLOSED) {
+                        poller.cancelledKey(key, socketWrapper);
+                    }
+                }
+
+        } 
+</code></pre><p><code>Poller</code>调用的<code>run</code>方法或者用Executor线程池去执行<code>run()</code>,最终调用都是各个子<code>EndPoint</code>中的<code>doRun()</code>方法，最终会取一个<code>Handler</code>去处理<code>socketWrapper</code>。继续看源码：</p>
+<pre><code>//类：13.AbstractProtocol内部类ConnectionHandler implements AbstractEndpoint.Handler&lt;S&gt;
+ public SocketState process(SocketWrapperBase&lt;S&gt; wrapper, SocketEvent status) {
+            //省略部分代码
+
+            state = processor.process(wrapper, status);
+
+            return SocketState.CLOSED;
+        }
+
+//类：14.AbstractProcessorLight implements Processor 
+public SocketState process(SocketWrapperBase&lt;?&gt; socketWrapper, SocketEvent status)
+            throws IOException {
+            //省略部分代码
+
+            state = service(socketWrapper);
+
+        return state;
+    }</code></pre><p> 这部分源码表明最终调用的process是通过一个<code>Processor</code>接口的实现类来完成的，这里最终也是会调用到各个子类中，那么这里的处理器其实就是处理应用协议，我们可以查看<code>AbstractProcessorLight</code>的实现类，分别有<code>AjpProcessor</code>、<code>Http11Processor</code>、<code>StreamProcessor</code>，分别代表tomcat支持三种应用层协议，分别是：</p>
+<ul>
+<li><p><a href="https://baike.baidu.com/item/ajp" target="_blank" rel="noopener">AJP</a>协议</p>
+</li>
+<li><p><a href="https://baike.baidu.com/item/HTTP1.1" target="_blank" rel="noopener">HTTP.1</a>协议</p>
+</li>
+<li><p><a href="https://baike.baidu.com/item/HTTP%202.0/12520156" target="_blank" rel="noopener">HTTP2.0</a>协议</p>
+<p>这里我们以常用的HTTP1.1为例，继续看源码：</p>
+<pre><code>//类：15. Http11Processor extends AbstractProcessor
+public SocketState service(SocketWrapperBase&lt;?&gt; socketWrapper)
+     throws IOException {
+     //省略大部分代码
+          getAdapter().service(request, response);
+     //省略大部分代码   
+     } 
+//类：16   CoyoteAdapter implements Adapter
+public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
+         throws Exception {
+
+     Request request = (Request) req.getNote(ADAPTER_NOTES);
+     Response response = (Response) res.getNote(ADAPTER_NOTES);
+     postParseSuccess = postParseRequest(req, request, res, response);
+         if (postParseSuccess) {
+             //check valves if we support async
+             request.setAsyncSupported(
+                     connector.getService().getContainer().getPipeline().isAsyncSupported());
+             // Calling the container
+             connector.getService().getContainer().getPipeline().getFirst().invoke(
+                     request, response);
+         }
+
+ }</code></pre></li>
+</ul>
+<p>这里我们发现协议处理器最终会调用适配器(<code>CoyoteAdapter</code>),而适配器最终的工作是转换<code>Request</code>和<code>Response</code>对象为<code>HttpServletRequest</code>和<code>HttpServletResponse</code>，从而可以去调用容器，到这里整个连接器的流程和作用我们就已经分析完了。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>那么我们来回忆下整个流程，我画了一张时序图来说明：</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/tomcat-connector/time-flow.png?raw=true" alt=""></p>
+<p>这张图包含了两个流程，一个是组件的初始化，一个是调用的流程。连接器(Connector)主要初始化了两个组件，<code>ProtcoHandler</code>和<code>EndPoint</code>,但是我们从代码结构发现，他们两个是父子关系，也就是说<code>ProtcoHandler</code>包含了<code>EndPoint</code>。后面的流程就是各个子组件的调用链关系，总结来说就是<code>Acceptor</code>负责接收请求，然后注册到<code>Poller</code>，<code>Poller</code>负责处理请求，然后调用<code>processor</code>处理器来处理，最后把请求转成符合<code>Servlet</code>规范的<code>request</code>和<code>response</code>去调用容器(<code>Container</code>)。</p>
+<p>我们流程梳理清楚了，接下来我们来结构化的梳理下：</p>
+<p>回到连接器（<code>Connector</code>）是源码，我们发现，上述说的模块只有<code>ProtocolHandler</code>和<code>Adapter</code>两个属于连接器中，也就是说，连接器只包含了这两大子模块，那么后续的<code>EndPoint</code>、<code>Acceptor</code>、<code>Poller</code>、<code>Processor</code>都是<code>ProtocolHandler</code>的子模块。<br>而<code>Acceptor</code>和<code>Poller</code>两个模块的核心功能都是在<code>EndPoint</code> 中完成的，所以是其子模块，而<code>Processor</code>比较独立，所以它和<code>EndPoint</code>是一个级别的子模块。</p>
+<p>我们用图来说明下上述的关系：</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/tomcat-connector/result.png?raw=true" alt=""></p>
+<p>根据上图我们可以知道，连接器主要负责处理连接请求，然后通过适配器调用容器。那么具体流程细化可以如下：</p>
+<ul>
+<li><code>Acceptor</code>监听网络请求，获取请求。</li>
+<li><code>Poller</code>获取到监听的请求提交线程池进行处理。</li>
+<li><code>Processor</code>根据具体的应用协议（HTTP/AJP）来生成Tomcat Request对象。</li>
+<li><code>Adapter</code>把Request对象转换成Servlet标准的Request对象，调用容器。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>我们从连接器的源码，一步一步解析，分析了连接器主要包含了两大模块，<code>ProtocolHandler</code>和<code>Adapter</code>。<code>ProtocolHandler</code>主要包含了<code>Endpoint</code>模块和<code>Processor</code>模块。<code>Endpoint</code>模块主要的作用是连接的处理，它委托了<code>Acceptor</code>子模块进行连接的监听和注册,委托子模块<code>Poller</code>进行连接的处理；而<code>Processor</code>模块主要是应用协议的处理，最后提交给<code>Adapter</code>进行对象的转换，以便可以调用容器(Container)。另外我们也在分析源码的过程中补充了一些额外知识点：</p>
+<ul>
+<li>当前Tomcat版本支持的IO模型为：APR模型、NIO模型、NIO.2模型</li>
+<li>Tomcat支持的协议是AJP和HTTP,其中HTTP又分为HTTP1.1和HTTP2.0</li>
+</ul>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a  class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>Tomcat中的连接器是如何设计的</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3.3k</span></p>
+    <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
+    <p><span class="copy-title">发布时间:</span>2019-08-26, 08:47:10</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-29, 21:07:24</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/08/26/Tomcat-connector/" title="Tomcat中的连接器是如何设计的">http://luozhou.top/2019/08/26/Tomcat-connector/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+    <div id="comments"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script type="text/javascript">
+    $.getScript('/js/gitalk.js', function () {
+        var gitalk = new Gitalk({
+            clientID: '31c103183ff07b9bd32e',
+            clientSecret: 'a4eab583958f09a3888bf8c9a53eee8ead874948',
+            repo: 'kinglaw1204.github.io',
+            owner: 'kinglaw1204',
+            admin: ['kinglaw1204'],
+            id: decodeURI(location.pathname),
+            distractionFreeMode: 'true',
+            language: 'zh-CN',
+            perPage: parseInt('10',10)
+        })
+        gitalk.render('comments')
+    })
+</script>
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2016-2020 木木匠（罗洲）</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" ></a>
+
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close"  onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="/js/jquery.pjax.js?v=1：.0.1" ></script>
+
+<script src="/js/script.js?v=1：.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['@木木匠','@今心','#Tomcat','#Docker','#Java','#Consul','#Jvm','#SpringBoot','#字节码','#jvm','#西藏','#攻略',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: ;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    
+    .nav {
+        width: 542px;
+    }
+    .nav.fullscreen {
+        margin-left: -542px;
+    }
+    .nav-left {
+        width: 120px;
+    }
+    
+    
+    @media screen and (max-width: 1468px) {
+        .nav {
+            width: 492px;
+        }
+        .nav.fullscreen {
+            margin-left: -492px;
+        }
+        .nav-left {
+            width: 100px;
+        }
+    }
+    
+    
+    @media screen and (max-width: 1024px) {
+        .nav {
+            width: 492px;
+            margin-left: -492px
+        }
+        .nav.fullscreen {
+            margin-left: 0;
+        }
+        .nav .hide-list.fullscreen {
+            left: 492px
+        }
+    }
+    
+    @media screen and (max-width: 426px) {
+        .nav {
+            width: 100%;
+        }
+        .nav-left {
+            width: 100%;
+        }
+    }
+    
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("https://i.loli.net/2019/07/22/5d3521411f3f169375.png");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+    .post .pjax article :not(pre) > code {
+        color: #24292e;
+        font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+        background-color: rgba(27,31,35,.05);
+        border-radius: 3px;
+        font-size: 85%;
+        margin: 0;
+        padding: .2em .4em;
+    }
+    
+</style>
+
+
+
+
+
+
+<div class="mobile-menus-out" >
+
+</div>
+<div class="mobile-menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+</div>
+
+
+</html>

@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Tomcat是如何实现异步Servlet的 | 匠人的小屋</title>
+  <meta name="keywords" content=" Tomcat ">
+  <meta name="description" content="Tomcat是如何实现异步Servlet的 | 匠人的小屋">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:type" content="article">
+<meta property="og:title" content="西藏旅游⊙准备篇">
+<meta property="og:url" content="http://luozhou.top/2020/02/29/Tibet-Travel-Guide/index.html">
+<meta property="og:site_name" content="匠人的小屋">
+<meta property="og:description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-02-29T12:55:33.000Z">
+<meta property="article:modified_time" content="2020-02-29T13:19:42.462Z">
+<meta property="article:author" content="木木匠">
+<meta property="article:tag" content="西藏">
+<meta property="article:tag" content="攻略">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1：.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1：.0.1" ></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js" ></script>
+
+<script src="/js/iconfont.js?v=1：.0.1" ></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value="">
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>木木匠</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="rss" href="/atom.xml" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-rss"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="github" href="https://github.com/kinglaw1204" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-github"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="oschina" href="https://my.oschina.net/luozhou" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-oschina"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="juejin" href="https://juejin.im/user/5b0261e2518825426b277d47" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-juejin"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="email" href="mailto:kinglaw1204@gmail.com" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-email"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=469183326&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+<a class="more-menus">更多菜单</a>
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(10)</small></div></li>
+    
+        
+            
+            <li><div data-rel="Java">Java<small>(3)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Tomcat">Tomcat<small>(4)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Docker">Docker<small>(2)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="旅游">旅游<small>(1)</small></div>
+                
+            </li>
+            
+        
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+    </div>
+    <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="10">
+<input type="hidden" id="yelog_site_word_count" value="27.5k">
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://luozhou.top/">匠人的小屋</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode === 13){return false;}">
+        <input id="local-search-input" class="search" type="text" placeholder="Search..." />
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Tomcat</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Docker</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color5">Java</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Consul</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">Jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color1">SpringBoot</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">字节码</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">西藏</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">攻略</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a id="top" class="Java "
+           href="/2020/02/27/java-code-used-memory/"
+           data-tag="Java,Jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class="旅游 "
+           href="/2020/02/29/Tibet-Travel-Guide/"
+           data-tag="西藏,攻略"
+           data-author="今心" >
+            <span class="post-title" title="西藏旅游⊙准备篇">西藏旅游⊙准备篇</span>
+            <span class="post-date" title="2020-02-29 20:55:33">2020/02/29</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2020/02/28/tomcat-synchrony/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat是如何实现异步Servlet的">Tomcat是如何实现异步Servlet的</span>
+            <span class="post-date" title="2020-02-28 08:43:24">2020/02/28</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2020/01/21/docker-islotion/"
+           data-tag="Docker"
+           data-author="木木匠" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/12/30/analyse-java-code/"
+           data-tag="字节码"
+           data-author="木木匠" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2019/12/04/deploy-consul-docker/"
+           data-tag="Docker,Consul"
+           data-author="木木匠" >
+            <span class="post-title" title="Consul集群版容器化部署与应用集成">Consul集群版容器化部署与应用集成</span>
+            <span class="post-date" title="2019-12-04 08:40:49">2019/12/04</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/09/09/Tomcat-container/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的容器是如何处理请求的">Tomcat中的容器是如何处理请求的</span>
+            <span class="post-date" title="2019-09-09 08:45:24">2019/09/09</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/26/Tomcat-connector/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
+            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/12/Tomcat-start-in-springboot/"
+           data-tag="Tomcat,SpringBoot"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat在SpringBoot中是如何启动的">Tomcat在SpringBoot中是如何启动的</span>
+            <span class="post-date" title="2019-08-12 08:51:24">2019/08/12</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/04/28/jvm-gc-01/"
+           data-tag="jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
+            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-tomcat-synchrony" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">Tomcat是如何实现异步Servlet的</h1>
+    
+    <div class="article-meta">
+        
+        
+        <span class="author"><a>木木匠</a></span>
+        
+        
+        <span class="book">
+            
+                <a  data-rel="Tomcat">Tomcat</a>
+            
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a class="color2">Tomcat</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2020-02-29 21:07:33'>2020-02-28 08:43</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        <span>字数:2.8k</span>
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+        <span class="top-comment" title="跳转至评论区">
+            <a href="#comments">
+                评论:<span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </a>
+        </span>
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手撸一个异步的Servlet"><span class="toc-text">手撸一个异步的Servlet</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#异步Servlet的内部原理"><span class="toc-text">异步Servlet的内部原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么说Spring-Boot的-EnableAsync注解不是异步Servlet"><span class="toc-text">为什么说Spring Boot的@EnableAsync注解不是异步Servlet</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#聊聊异步Servlet的使用场景"><span class="toc-text">聊聊异步Servlet的使用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Tomcat%E8%A7%A3%E6%9E%90/%E5%BC%82%E6%AD%A5Servlet/cat-cover.jpg?raw=true" alt="tomcat"></p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>通过我之前的Tomcat系列文章，相信看我博客的同学对Tomcat应该有一个比较清晰的了解了，在前几篇博客我们讨论了Tomcat在SpringBoot框架中是如何启动的，讨论了Tomcat的内部组件是如何设计以及请求是如何流转的，那么我们这篇博客聊聊Tomcat的异步Servlet，Tomcat是如何实现异步Servlet的以及异步Servlet的使用场景。</p>
+<h2 id="手撸一个异步的Servlet"><a href="#手撸一个异步的Servlet" class="headerlink" title="手撸一个异步的Servlet"></a>手撸一个异步的Servlet</h2><p>我们直接借助SpringBoot框架来实现一个Servlet,这里只展示Servlet代码：</p>
+<pre><code>@WebServlet(urlPatterns = &quot;/async&quot;,asyncSupported = true)
+@Slf4j
+public class AsyncServlet extends HttpServlet {
+
+    ExecutorService executorService =Executors.newSingleThreadExecutor();
+
+    @Override
+     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //开启异步,获取异步上下文
+        final AsyncContext ctx = req.startAsync();
+        // 提交线程池异步执行
+        executorService.execute(new Runnable() {
+
+
+            @Override
+            public void run() {
+                try {
+                    log.info(&quot;async Service 准备执行了&quot;);
+                    //模拟耗时任务
+                    Thread.sleep(10000L);
+                    ctx.getResponse().getWriter().print(&quot;async servlet&quot;);
+                    log.info(&quot;async Service 执行了&quot;);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                //最后执行完成后完成回调。
+                ctx.complete();
+            }
+        });
+    }
+</code></pre><p>上面的代码实现了一个异步的Servlet,实现了<code>doGet</code>方法注意在SpringBoot中使用需要再启动类加上<code>@ServletComponentScan</code>注解来扫描Servlet。既然代码写好了，我们来看看实际运行效果。</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Tomcat%E8%A7%A3%E6%9E%90/%E5%BC%82%E6%AD%A5Servlet/async%20Servlet%20result.png?raw=true" alt=""></p>
+<p>我们发送一个请求后，看到页面有响应，同时，看到请求时间花费了10.05s,那么我们这个Servlet算是能正常运行啦。有同学肯定会问，这不是异步servlet吗？你的响应时间并没有加快，有什么用呢？对，我们的响应时间并不能加快，还是会取决于我们的业务逻辑，但是我们的异步servlet请求后，依赖于业务的异步执行，我们可以立即返回，也就是说，Tomcat的线程可以立即回收，默认情况下，Tomcat的核心线程是<strong>10</strong>，最大线程数是<strong>200</strong>,我们能及时回收线程，也就意味着我们能处理更多的请求，能够增加我们的吞吐量，这也是异步Servlet的主要作用。</p>
+<h2 id="异步Servlet的内部原理"><a href="#异步Servlet的内部原理" class="headerlink" title="异步Servlet的内部原理"></a>异步Servlet的内部原理</h2><p>了解完异步Servlet的作用后，我们来看看，Tomcat是如何是先异步Servlet的。其实上面的代码，主要核心逻辑就两部分，<code>final AsyncContext ctx = req.startAsync()</code>和<code>ctx.complete()</code>那我们来看看他们究竟做了什么？</p>
+<pre><code>   public AsyncContext startAsync(ServletRequest request,
+            ServletResponse response) {
+        if (!isAsyncSupported()) {
+            IllegalStateException ise =
+                    new IllegalStateException(sm.getString(&quot;request.asyncNotSupported&quot;));
+            log.warn(sm.getString(&quot;coyoteRequest.noAsync&quot;,
+                    StringUtils.join(getNonAsyncClassNames())), ise);
+            throw ise;
+        }
+
+        if (asyncContext == null) {
+            asyncContext = new AsyncContextImpl(this);
+        }
+
+        asyncContext.setStarted(getContext(), request, response,
+                request==getRequest() &amp;&amp; response==getResponse().getResponse());
+        asyncContext.setTimeout(getConnector().getAsyncTimeout());
+
+        return asyncContext;
+    }</code></pre><p>我们发现<code>req.startAsync()</code>只是保存了一个异步上下文，同时设置一些基础信息，比如<code>Timeout</code>,顺便提一下，这里设置的默认超时时间是<strong>30S</strong>，如果你的异步处理逻辑超过<strong>30S</strong>,此时执行<code>ctx.complete()</code>就会抛出IllegalStateException 异常。</p>
+<p>我们来看看<code>ctx.complete()</code>的逻辑</p>
+<pre><code>  public void complete() {
+        if (log.isDebugEnabled()) {
+            logDebug(&quot;complete   &quot;);
+        }
+        check();
+        request.getCoyoteRequest().action(ActionCode.ASYNC_COMPLETE, null);
+    }
+//类：AbstractProcessor 
+ public final void action(ActionCode actionCode, Object param) {
+    case ASYNC_COMPLETE: {
+            clearDispatches();
+            if (asyncStateMachine.asyncComplete()) {
+                processSocketEvent(SocketEvent.OPEN_READ, true);
+            }
+            break;
+        } 
+    }
+    //类：AbstractProcessor 
+protected void processSocketEvent(SocketEvent event, boolean dispatch) {
+        SocketWrapperBase&lt;?&gt; socketWrapper = getSocketWrapper();
+        if (socketWrapper != null) {
+            socketWrapper.processSocket(event, dispatch);
+        }
+    }
+    //类：AbstractEndpoint
+public boolean processSocket(SocketWrapperBase&lt;S&gt; socketWrapper,
+            SocketEvent event, boolean dispatch) {
+        //省略部分代码
+            SocketProcessorBase&lt;S&gt; sc = null;
+            if (processorCache != null) {
+                sc = processorCache.pop();
+            }
+            if (sc == null) {
+                sc = createSocketProcessor(socketWrapper, event);
+            } else {
+                sc.reset(socketWrapper, event);
+            }
+            Executor executor = getExecutor();
+            if (dispatch &amp;&amp; executor != null) {
+                executor.execute(sc);
+            } else {
+                sc.run();
+            }
+
+        return true;
+    }</code></pre><p>所以，这里最终会调用<code>AbstractEndpoint</code>的<code>processSocket</code>方法，之前看过我前面博客的同学应该有印象，<code>EndPoint</code>是用来接受和处理请求的，接下来就会交给<code>Processor</code>去进行协议处理。</p>
+<pre><code>类：AbstractProcessorLight
+public SocketState process(SocketWrapperBase&lt;?&gt; socketWrapper, SocketEvent status)
+            throws IOException {
+        //省略部分diam
+        SocketState state = SocketState.CLOSED;
+        Iterator&lt;DispatchType&gt; dispatches = null;
+        do {
+            if (dispatches != null) {
+                DispatchType nextDispatch = dispatches.next();
+                state = dispatch(nextDispatch.getSocketStatus());
+            } else if (status == SocketEvent.DISCONNECT) {
+
+            } else if (isAsync() || isUpgrade() || state == SocketState.ASYNC_END) {
+                state = dispatch(status);
+                if (state == SocketState.OPEN) {
+                    state = service(socketWrapper);
+                }
+            } else if (status == SocketEvent.OPEN_WRITE) {
+                state = SocketState.LONG;
+            } else if (status == SocketEvent.OPEN_READ){
+                state = service(socketWrapper);
+            } else {
+                state = SocketState.CLOSED;
+            }
+
+        } while (state == SocketState.ASYNC_END ||
+                dispatches != null &amp;&amp; state != SocketState.CLOSED);
+
+        return state;
+    }</code></pre><p>这部分是重点，<code>AbstractProcessorLight</code>会根据<code>SocketEvent</code>的状态来判断是不是要去调用<code>service(socketWrapper)</code>,该方法最终会去调用到容器，从而完成业务逻辑的调用，我们这个请求是执行完成后调用的，肯定不能进容器了，不然就是死循环了，这里通过<code>isAsync()</code>判断，就会进入<code>dispatch(status)</code>,最终会调用<code>CoyoteAdapter</code>的<code>asyncDispatch</code>方法</p>
+<pre><code>public boolean asyncDispatch(org.apache.coyote.Request req, org.apache.coyote.Response res,
+            SocketEvent status) throws Exception {
+        //省略部分代码
+        Request request = (Request) req.getNote(ADAPTER_NOTES);
+        Response response = (Response) res.getNote(ADAPTER_NOTES);
+        boolean success = true;
+        AsyncContextImpl asyncConImpl = request.getAsyncContextInternal();
+        try {
+            if (!request.isAsync()) {
+                response.setSuspended(false);
+            }
+
+            if (status==SocketEvent.TIMEOUT) {
+                if (!asyncConImpl.timeout()) {
+                    asyncConImpl.setErrorState(null, false);
+                }
+            } else if (status==SocketEvent.ERROR) {
+
+            }
+
+            if (!request.isAsyncDispatching() &amp;&amp; request.isAsync()) {
+                WriteListener writeListener = res.getWriteListener();
+                ReadListener readListener = req.getReadListener();
+                if (writeListener != null &amp;&amp; status == SocketEvent.OPEN_WRITE) {
+                    ClassLoader oldCL = null;
+                    try {
+                        oldCL = request.getContext().bind(false, null);
+                        res.onWritePossible();//这里执行浏览器响应，写入数据
+                        if (request.isFinished() &amp;&amp; req.sendAllDataReadEvent() &amp;&amp;
+                                readListener != null) {
+                            readListener.onAllDataRead();
+                        }
+                    } catch (Throwable t) {
+
+                    } finally {
+                        request.getContext().unbind(false, oldCL);
+                    }
+                } 
+                }
+            }
+            //这里判断异步正在进行，说明这不是一个完成方法的回调，是一个正常异步请求，继续调用容器。
+            if (request.isAsyncDispatching()) {
+                connector.getService().getContainer().getPipeline().getFirst().invoke(
+                        request, response);
+                Throwable t = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+                if (t != null) {
+                    asyncConImpl.setErrorState(t, true);
+                }
+            }
+            //注意，这里，如果超时或者出错，request.isAsync()会返回false，这里是为了尽快的输出错误给客户端。
+            if (!request.isAsync()) {
+                //这里也是输出逻辑
+                request.finishRequest();
+                response.finishResponse();
+            }
+            //销毁request和response
+            if (!success || !request.isAsync()) {
+                updateWrapperErrorCount(request, response);
+                request.recycle();
+                response.recycle();
+            }
+        }
+        return success;
+    }</code></pre><p>上面的代码就是<code>ctx.complete()</code>执行最终的方法了（当然省略了很多细节），完成了数据的输出，最终输出到浏览器。</p>
+<p>这里有同学可能会说，我知道异步执行完后，调用<code>ctx.complete()</code>会输出到浏览器，但是，第一次doGet请求执行完成后，Tomcat是怎么知道不用返回到客户端的呢？关键代码在<code>CoyoteAdapter</code>中的<code>service</code>方法，部分代码如下：</p>
+<pre><code>  postParseSuccess = postParseRequest(req, request, res, response);
+            //省略部分代码
+            if (postParseSuccess) {
+                request.setAsyncSupported(
+                        connector.getService().getContainer().getPipeline().isAsyncSupported());
+                connector.getService().getContainer().getPipeline().getFirst().invoke(
+                        request, response);
+            }
+            if (request.isAsync()) {
+                async = true;
+               } else {
+               //输出数据到客户端
+                request.finishRequest();
+                response.finishResponse();
+            if (!async) {
+                updateWrapperErrorCount(request, response);
+                //销毁request和response
+                request.recycle();
+                response.recycle();
+            }
+</code></pre><p>这部分代码在调用完<code>Servlet</code>后，会通过<code>request.isAsync()</code>来判断是否是异步请求，如果是异步请求，就设置<code>async = true</code>。如果是非异步请求就执行输出数据到客户端逻辑，同时销毁<code>request</code>和<code>response</code>。这里就完成了请求结束后不响应客户端的操作。</p>
+<h2 id="为什么说Spring-Boot的-EnableAsync注解不是异步Servlet"><a href="#为什么说Spring-Boot的-EnableAsync注解不是异步Servlet" class="headerlink" title="为什么说Spring Boot的@EnableAsync注解不是异步Servlet"></a>为什么说Spring Boot的@EnableAsync注解不是异步Servlet</h2><p>因为之前准备写本篇文章的时候就查询过很多资料，发现很多资料写SpringBoot异步编程都是依赖于<code>@EnableAsync</code>注解，然后在<code>Controller</code>用多线程来完成业务逻辑，最后汇总结果，完成返回输出。这里拿一个掘金大佬的文章来举例《<a href="https://juejin.im/post/5d9e7cfa6fb9a04e1f12ec02" target="_blank" rel="noopener">新手也能看懂的 SpringBoot 异步编程指南</a>》，这篇文章写得很通俗易懂，非常不错，从业务层面来说，确实是异步编程，但是有一个问题，抛开业务的并行处理来说，针对整个请求来说，并不是异步的，也就是说不能立即释放Tomcat的线程，从而不能达到异步Servlet的效果。这里我参考上文也写了一个demo，我们来验证下，为什么它不是异步的。</p>
+<pre><code>@RestController
+@Slf4j
+public class TestController {
+    @Autowired
+    private TestService service;
+
+    @GetMapping(&quot;/hello&quot;)
+    public String test() {
+        try {
+            log.info(&quot;testAsynch Start&quot;);
+            CompletableFuture&lt;String&gt; test1 = service.test1();
+            CompletableFuture&lt;String&gt; test2 = service.test2();
+            CompletableFuture&lt;String&gt; test3 = service.test3();
+            CompletableFuture.allOf(test1, test2, test3);
+            log.info(&quot;test1=====&quot; + test1.get());
+            log.info(&quot;test2=====&quot; + test2.get());
+            log.info(&quot;test3=====&quot; + test3.get());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return &quot;hello&quot;;
+    }
+@Service
+public class TestService {
+    @Async(&quot;asyncExecutor&quot;)
+    public CompletableFuture&lt;String&gt; test1() throws InterruptedException {
+        Thread.sleep(3000L);
+        return CompletableFuture.completedFuture(&quot;test1&quot;);
+    }
+
+    @Async(&quot;asyncExecutor&quot;)
+    public CompletableFuture&lt;String&gt; test2() throws InterruptedException {
+        Thread.sleep(3000L);
+        return CompletableFuture.completedFuture(&quot;test2&quot;);
+    }
+
+    @Async(&quot;asyncExecutor&quot;)
+    public CompletableFuture&lt;String&gt; test3() throws InterruptedException {
+        Thread.sleep(3000L);
+        return CompletableFuture.completedFuture(&quot;test3&quot;);
+    }
+}
+@SpringBootApplication
+@EnableAsync
+public class TomcatdebugApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(TomcatdebugApplication.class, args);
+    }
+
+    @Bean(name = &quot;asyncExecutor&quot;)
+    public Executor asyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(3);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix(&quot;AsynchThread-&quot;);
+        executor.initialize();
+        return executor;
+    }
+</code></pre><p>这里我运行下，看看效果</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Tomcat%E8%A7%A3%E6%9E%90/%E5%BC%82%E6%AD%A5Servlet/Spring%20boot%20%E5%BC%82%E6%AD%A51.gif?raw=true" alt=""></p>
+<p>这里我请求之后，在调用容器执行业务逻辑之前打了一个断点，然后在返回之后的同样打了一个断点，在<code>Controller</code>执行完之后，请求才回到了<code>CoyoteAdapter</code>中，并且判断<code>request.isAsync()</code>,根据图中看到，是为<code>false</code>,那么接下来就会执行<code>request.finishRequest()</code>和<code>response.finishResponse()</code><br>来执行响应的结束，并销毁请求和响应体。很有趣的事情是，我实验的时候发现，在执行<code>request.isAsync()</code>之前，浏览器的页面上已经出现了响应体，这是SpringBoot框架已经通过<code>StringHttpMessageConverter</code>类中的<code>writeInternal</code>方法已经进行输出了。</p>
+<p><strong>以上分析的核心逻辑就是</strong>，Tomcat的线程执行<code>CoyoteAdapter</code>调用容器后，必须要等到请求返回，然后再判断是否是异步请求，再处理请求，然后执行完毕后，线程才能进行回收。而我一最开始的异步Servlet例子，执行完doGet方法后，就会立即返回，也就是会直接到<code>request.isAsync()</code>的逻辑，然后整个线程的逻辑执行完毕，线程被回收。</p>
+<h2 id="聊聊异步Servlet的使用场景"><a href="#聊聊异步Servlet的使用场景" class="headerlink" title="聊聊异步Servlet的使用场景"></a>聊聊异步Servlet的使用场景</h2><p>分析了这么多，那么异步Servlet的使用场景有哪些呢？其实我们只要抓住一点就可以分析了，就是异步Servlet提高了系统的吞吐量，可以接受更多的请求。假设web系统中Tomcat的线程不够用了，大量请求在等待，而此时Web系统应用层面的优化已经不能再优化了，也就是无法缩短业务逻辑的响应时间了，这个时候，如果想让减少用户的等待时间，提高吞吐量，可以尝试下使用异步Servlet。</p>
+<p><strong>举一个实际的例子</strong>：比如做一个短信系统，短信系统对实时性要求很高，所以要求等待时间尽可能短，而发送功能我们实际上是委托运营商去发送的，也就是说我们要调用接口，假设并发量很高，那么这个时候业务系统调用我们的发送短信功能，就有可能把我们的Tomcat线程池用完，剩下的请求就会在队列中等待，那这个时候，短信的延时就上去了，为了解决这个问题，我们可以引入异步Servlet,接受更多的短信发送请求，从而减少短信的延时。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇文章我从手写一个异步Servlet来开始，分析了异步Servlet的作用，以及Tomcat内部是如何实现异步Servlet的，然后我也根据互联网上流行的SpringBoot异步编程来进行说明，其在Tomcat内部并不是一个异步的Servlet。最后，我谈到了异步Servlet的使用场景，分析了什么情况下可以尝试异步Servlet。</p>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a  class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>Tomcat是如何实现异步Servlet的</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">2.8k</span></p>
+    <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
+    <p><span class="copy-title">发布时间:</span>2020-02-28, 08:43:24</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-29, 21:07:33</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/02/28/tomcat-synchrony/" title="Tomcat是如何实现异步Servlet的">http://luozhou.top/2020/02/28/tomcat-synchrony/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+    <div id="comments"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script type="text/javascript">
+    $.getScript('/js/gitalk.js', function () {
+        var gitalk = new Gitalk({
+            clientID: '31c103183ff07b9bd32e',
+            clientSecret: 'a4eab583958f09a3888bf8c9a53eee8ead874948',
+            repo: 'kinglaw1204.github.io',
+            owner: 'kinglaw1204',
+            admin: ['kinglaw1204'],
+            id: decodeURI(location.pathname),
+            distractionFreeMode: 'true',
+            language: 'zh-CN',
+            perPage: parseInt('10',10)
+        })
+        gitalk.render('comments')
+    })
+</script>
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2016-2020 木木匠（罗洲）</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" ></a>
+
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close"  onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="/js/jquery.pjax.js?v=1：.0.1" ></script>
+
+<script src="/js/script.js?v=1：.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['@木木匠','@今心','#Tomcat','#Docker','#Java','#Consul','#Jvm','#SpringBoot','#字节码','#jvm','#西藏','#攻略',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: ;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    
+    .nav {
+        width: 542px;
+    }
+    .nav.fullscreen {
+        margin-left: -542px;
+    }
+    .nav-left {
+        width: 120px;
+    }
+    
+    
+    @media screen and (max-width: 1468px) {
+        .nav {
+            width: 492px;
+        }
+        .nav.fullscreen {
+            margin-left: -492px;
+        }
+        .nav-left {
+            width: 100px;
+        }
+    }
+    
+    
+    @media screen and (max-width: 1024px) {
+        .nav {
+            width: 492px;
+            margin-left: -492px
+        }
+        .nav.fullscreen {
+            margin-left: 0;
+        }
+        .nav .hide-list.fullscreen {
+            left: 492px
+        }
+    }
+    
+    @media screen and (max-width: 426px) {
+        .nav {
+            width: 100%;
+        }
+        .nav-left {
+            width: 100%;
+        }
+    }
+    
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("https://i.loli.net/2019/07/22/5d3521411f3f169375.png");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+    .post .pjax article :not(pre) > code {
+        color: #24292e;
+        font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+        background-color: rgba(27,31,35,.05);
+        border-radius: 3px;
+        font-size: 85%;
+        margin: 0;
+        padding: .2em .4em;
+    }
+    
+</style>
+
+
+
+
+
+
+<div class="mobile-menus-out" >
+
+</div>
+<div class="mobile-menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+</div>
+
+
+</html>

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Docker是如何实现隔离的 | 匠人的小屋</title>
+  <meta name="keywords" content=" Docker ">
+  <meta name="description" content="Docker是如何实现隔离的 | 匠人的小屋">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:type" content="article">
+<meta property="og:title" content="西藏旅游⊙准备篇">
+<meta property="og:url" content="http://luozhou.top/2020/02/29/Tibet-Travel-Guide/index.html">
+<meta property="og:site_name" content="匠人的小屋">
+<meta property="og:description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-02-29T12:55:33.000Z">
+<meta property="article:modified_time" content="2020-02-29T13:19:42.462Z">
+<meta property="article:author" content="木木匠">
+<meta property="article:tag" content="西藏">
+<meta property="article:tag" content="攻略">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="icon" href="/img/avatar.jpg">
+
+<link href="/css/style.css?v=1：.0.1" rel="stylesheet">
+
+<link href="/css/hl_theme/sublime.css?v=1：.0.1" rel="stylesheet">
+
+<link href="//cdn.bootcss.com/animate.css/3.5.2/animate.min.css" rel="stylesheet">
+<link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/jquery.autocomplete.min.js?v=1：.0.1" ></script>
+
+<script src="//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<script>
+    hljs.initHighlightingOnLoad();
+</script>
+
+<script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+
+
+
+<script src="//cdn.bootcss.com/jquery-cookie/1.4.1/jquery.cookie.min.js" ></script>
+
+<script src="/js/iconfont.js?v=1：.0.1" ></script>
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+<div style="display: none">
+  <input class="theme_disqus_on" value="false">
+  <input class="theme_preload_comment" value="false">
+  <input class="theme_blog_path" value="">
+</div>
+
+<body>
+<aside class="nav">
+    <div class="nav-left">
+        <a href="/" class="avatar_target">
+    <img class="avatar" src="/img/avatar.jpg" />
+</a>
+<div class="author">
+    <span>木木匠</span>
+</div>
+
+<div class="icon">
+    
+        
+        <a title="rss" href="/atom.xml" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-rss"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="github" href="https://github.com/kinglaw1204" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-github"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="oschina" href="https://my.oschina.net/luozhou" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-oschina"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="juejin" href="https://juejin.im/user/5b0261e2518825426b277d47" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-juejin"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="email" href="mailto:kinglaw1204@gmail.com" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-email"></use>
+                </svg>
+            
+        </a>
+        
+    
+        
+        <a title="qq" href="http://wpa.qq.com/msgrd?v=3&uin=469183326&site=qq&menu=yes" target="_blank">
+            
+                <svg class="iconfont-svg" aria-hidden="true">
+                    <use xlink:href="#icon-qq"></use>
+                </svg>
+            
+        </a>
+        
+    
+</div>
+
+
+
+<a class="more-menus">更多菜单</a>
+
+
+<ul>
+    <li><div class="all active">全部文章<small>(10)</small></div></li>
+    
+        
+            
+            <li><div data-rel="Java">Java<small>(3)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Tomcat">Tomcat<small>(4)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="Docker">Docker<small>(2)</small></div>
+                
+            </li>
+            
+        
+    
+        
+            
+            <li><div data-rel="旅游">旅游<small>(1)</small></div>
+                
+            </li>
+            
+        
+    
+</ul>
+<div class="left-bottom">
+    <div class="menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+    </div>
+    <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
+</div>
+<input type="hidden" id="yelog_site_posts_number" value="10">
+<input type="hidden" id="yelog_site_word_count" value="27.5k">
+<div style="display: none">
+    <span id="busuanzi_value_site_uv"></span>
+    <span id="busuanzi_value_site_pv"></span>
+</div>
+
+    </div>
+    <div class="nav-right">
+        <div class="friends-area">
+    <div class="friends-title">
+        友情链接
+        <i class="back-title-list"></i>
+    </div>
+    <div class="friends-content">
+        <ul>
+            
+            <li><a target="_blank" href="http://luozhou.top/">匠人的小屋</a></li>
+            
+        </ul>
+    </div>
+</div>
+        <div class="title-list">
+    <form onkeydown="if(event.keyCode === 13){return false;}">
+        <input id="local-search-input" class="search" type="text" placeholder="Search..." />
+        <i class="cross"></i>
+        <span>
+            <label for="tagswitch">Tags:</label>
+            <input id="tagswitch" type="checkbox" style="display: none" />
+            <i id="tagsWitchIcon"></i>
+        </span>
+    </form>
+    <div class="tags-list">
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Tomcat</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Docker</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color5">Java</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color2">Consul</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">Jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color1">SpringBoot</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">字节码</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color4">jvm</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">西藏</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">攻略</a>
+    </li>
+    
+    <div class="clearfix"></div>
+</div>
+
+    
+    <nav id="title-list-nav">
+        
+        <a id="top" class="Java "
+           href="/2020/02/27/java-code-used-memory/"
+           data-tag="Java,Jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class="旅游 "
+           href="/2020/02/29/Tibet-Travel-Guide/"
+           data-tag="西藏,攻略"
+           data-author="今心" >
+            <span class="post-title" title="西藏旅游⊙准备篇">西藏旅游⊙准备篇</span>
+            <span class="post-date" title="2020-02-29 20:55:33">2020/02/29</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2020/02/28/tomcat-synchrony/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat是如何实现异步Servlet的">Tomcat是如何实现异步Servlet的</span>
+            <span class="post-date" title="2020-02-28 08:43:24">2020/02/28</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2020/01/21/docker-islotion/"
+           data-tag="Docker"
+           data-author="木木匠" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/12/30/analyse-java-code/"
+           data-tag="字节码"
+           data-author="木木匠" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2019/12/04/deploy-consul-docker/"
+           data-tag="Docker,Consul"
+           data-author="木木匠" >
+            <span class="post-title" title="Consul集群版容器化部署与应用集成">Consul集群版容器化部署与应用集成</span>
+            <span class="post-date" title="2019-12-04 08:40:49">2019/12/04</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/09/09/Tomcat-container/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的容器是如何处理请求的">Tomcat中的容器是如何处理请求的</span>
+            <span class="post-date" title="2019-09-09 08:45:24">2019/09/09</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/26/Tomcat-connector/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
+            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/12/Tomcat-start-in-springboot/"
+           data-tag="Tomcat,SpringBoot"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat在SpringBoot中是如何启动的">Tomcat在SpringBoot中是如何启动的</span>
+            <span class="post-date" title="2019-08-12 08:51:24">2019/08/12</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/04/28/jvm-gc-01/"
+           data-tag="jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
+            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
+    </nav>
+</div>
+    </div>
+    <div class="hide-list">
+        <div class="semicircle">
+            <div class="brackets first"><</div>
+            <div class="brackets">&gt;</div>
+        </div>
+    </div>
+</aside>
+<div class="post">
+    <div class="pjax">
+        <article id="post-docker-islotion" class="article article-type-post" itemscope itemprop="blogPost">
+    
+        <h1 class="article-title">Docker是如何实现隔离的</h1>
+    
+    <div class="article-meta">
+        
+        
+        <span class="author"><a>木木匠</a></span>
+        
+        
+        <span class="book">
+            
+                <a  data-rel="Docker">Docker</a>
+            
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a class="color2">Docker</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+        创建时间:<time class="date" title='更新时间: 2020-02-29 21:07:05'>2020-01-21 09:36</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        <span>字数:3k</span>
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读:<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+        <span class="top-comment" title="跳转至评论区">
+            <a href="#comments">
+                评论:<span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </a>
+        </span>
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从运行一个容器开始"><span class="toc-text">从运行一个容器开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进程的隔离"><span class="toc-text">进程的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件的隔离"><span class="toc-text">文件的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#资源的限制"><span class="toc-text">资源的限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#与传统虚拟机技术的区别"><span class="toc-text">与传统虚拟机技术的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+    
+<style>
+    .left-col .switch-btn,
+    .left-col .switch-area {
+        display: none;
+    }
+    .toc-level-3 i,
+    .toc-level-3 ol {
+        display: none !important;
+    }
+</style>
+</div>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><img src="https://cdn.pixabay.com/photo/2015/01/15/14/51/wal-600387_1280.png" alt=""></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>容器化技术在当前云计算、微服务等体系下大行其道，而 Docker 便是容器化技术的典型，对于容器化典型的技术，我们有必要弄懂它，所以这篇文章，我会来分析下 Docker 是如何实现隔离技术的，Docker 与虚拟机又有哪些区别呢？接下来，我们开始逐渐揭开它的面纱。</p>
+<h2 id="从运行一个容器开始"><a href="#从运行一个容器开始" class="headerlink" title="从运行一个容器开始"></a>从运行一个容器开始</h2><p>我们开始运行一个简单的容器，这里以<code>busybox</code>镜像为例，它是一个常用的Linux工具箱，可以用来执行很多Linux命令，我们以它为镜像启动容器方便来查看容器内部环境。<br>执行命令：</p>
+<pre><code>docker run -it --name demo_docker busybox /bin/sh</code></pre><p>这条命令的意思是：启动一个<code>busybox</code>镜像的 Docker 容器，<code>-it</code>参数表示给容器提供一个输出/输出的交互环境，也就是TTY。<code>/bin/sh</code>表示容器交互运行的命令或者程序。</p>
+<h2 id="进程的隔离"><a href="#进程的隔离" class="headerlink" title="进程的隔离"></a>进程的隔离</h2><p>执行成功后我们就会进入到了 Docker 容器内部,我们执行<code>ps -ef</code> 查看进程</p>
+<pre><code>/ # ps -ef
+PID   USER     TIME  COMMAND
+    1 root      0:00 /bin/sh
+    8 root      0:00 ps -ef</code></pre><p>使用<code>top</code>命令查看进程资源</p>
+<pre><code>Mem: 1757172K used, 106080K free, 190676K shrd, 129872K buff, 998704K cached
+CPU:  0.0% usr  0.2% sys  0.0% nic 99.6% idle  0.0% io  0.0% irq  0.0% sirq
+Load average: 0.00 0.01 0.05 2/497 9
+  PID  PPID USER     STAT   VSZ %VSZ CPU %CPU COMMAND
+    1     0 root     S     1300  0.0   1  0.0 /bin/sh
+    9     1 root     R     1292  0.0   3  0.0 top</code></pre><p>而我们在宿主机查看下当前执行容器的进程<code>ps -ef|grep busybox</code></p>
+<pre><code>root       5866   5642  0 01:19 pts/4    00:00:00 /usr/bin/docker-current run -it --name demo_docker busybox /bin/sh
+root       5952   5759  0 01:20 pts/11   00:00:00 grep --color=auto busybox</code></pre><p>这里我们可以知道，对于宿主机 <code>docker run</code>执行命令启动的只是一个进程，它的<code>pid</code>是5866。而对于容器程序本身来说，它被隔离了，在容器内部都只能看到自己内部的进程，那 Docker 是如何做到的呢？它其实是借助了Linux内核的<code>Namespace</code>技术来实现的，这里我结合一段C程序来模拟一下进程的隔离。</p>
+<pre><code>#define _GNU_SOURCE
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;sched.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/mount.h&gt;
+/* 定义一个给 clone 用的栈，栈大小1M */
+#define STACK_SIZE (1024 * 1024)
+static char container_stack[STACK_SIZE];
+
+char* const container_args[] = {
+    &quot;/bin/bash&quot;,
+    NULL
+};
+
+
+int container_main(void* arg)
+{
+    printf(&quot;容器进程[%5d] ----进入容器!\n&quot;,getpid());
+    mount(&quot;proc&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, NULL);
+    /**执行/bin/bash */
+    execv(container_args[0], container_args);
+    printf(&quot;出错啦!\n&quot;);
+    return 1;
+}
+
+int main()
+{
+    printf(&quot;宿主机进程[%5d] - 开始一个容器!\n&quot;,getpid());
+    /* 调用clone函数 */
+    int container_pid = clone(container_main, container_stack+STACK_SIZE,  CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
+    /* 等待子进程结束 */
+    waitpid(container_pid, NULL, 0);
+    printf(&quot;宿主机 - 容器结束!\n&quot;);
+    return 0;
+}</code></pre><p>考虑到很多同学对C语言不是很熟悉，我这里简单解释下这段程序，这段程序主要就是执行<code>clone()</code>函数，去克隆一个进程，而克隆执行的程序就是我们的<code>container_main</code>函数，接着下一个参数就是栈空间，然后<code>CLONE_NEWPID</code>和<code>CLONE_NEWNS</code> 表示Linux NameSpace的调用类别，分别表示创建新的进程命名空间和 挂载命名空间。</p>
+<ul>
+<li><p><code>CLONE_NEWPID</code>会让执行的程序内部重新编号<code>PID</code>，也就是从<code>1</code>号进程开始</p>
+</li>
+<li><p><code>CLONE_NEWNS</code> 会克隆新的挂载环境出来，通过在子进程内部重新挂载<code>proc</code>文件夹，可以屏蔽父进程的进程信息。</p>
+</li>
+</ul>
+<p>我们执行一下这段程序来看看效果。</p>
+<p><strong>编译</strong></p>
+<pre><code>gcc container.c -o container</code></pre><p><strong>执行</strong></p>
+<pre><code>[root@host1 luozhou]# ./container 
+宿主机进程[ 6061] - 开始一个容器!
+容器进程[    1] ----进入容器!</code></pre><p>这里我们看到输出在宿主机看来，这个程序的<code>PID</code>是<code>6061</code>，在克隆的子进程来看，它的<code>PID</code>是<code>1</code>，我们执行<code>ps -ef</code> 查看一下进程列表</p>
+<pre><code>[root@host1 luozhou]# ps -ef
+UID         PID   PPID  C STIME TTY          TIME CMD
+root          1      0  0 01:46 pts/2    00:00:00 /bin/bash
+root         10      1  0 01:48 pts/2    00:00:00 ps -ef</code></pre><p>我们发现确实只有容器内部的进程在运行了，再执行<code>top</code>命令</p>
+<pre><code>
+   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                  
+     1 root      20   0  115576   2112   1628 S   0.0  0.1   0:00.00 bash                                                                                                     
+    11 root      20   0  161904   2124   1544 R   0.0  0.1   0:00.00 top  </code></pre><p>结果也只有2个进程的信息。</p>
+<p>这就是容器隔离进程的基本原理了，Docker主要就是借助 Linux 内核技术Namespace来做到隔离的，其实包括我后面要说到文件的隔离，资源的隔离都是在新的命名空间下通过<code>mount</code>挂载的方式来隔离的。</p>
+<h2 id="文件的隔离"><a href="#文件的隔离" class="headerlink" title="文件的隔离"></a>文件的隔离</h2><p>了解完进程的隔离，相信你们已经对 Docker 容器的隔离玩法就大概的印象了，我们接下来看看，Docker 内部的文件系统如何隔离，也就是你在 Docker 内部执行 <code>ls</code> 显示的文件夹和文件如何来的。</p>
+<p>我们还是以前面的 Docker 命令为例，执行<code>ls</code></p>
+<pre><code>bin   dev   etc   home  proc  root  run   sys   tmp   usr   var</code></pre><p>我们发现容器内部已经包含了这些文件夹了，那么这些文件夹哪里来的呢？我们先执行<code>docker info</code>来看看我们的 Docker 用到的文件系统是什么？</p>
+<pre><code>Server Version: 1.13.1
+Storage Driver: overlay2</code></pre><p>我的版本是1.13.1，存储驱动是<code>overlay2</code>,不同的存储驱动在 Docker 中表现不一样，但是原理类似，我们来看看 Docker 如何借助<code>overlay2</code>来变出这么多文件夹的。我们前面提到过，Docker都是通过mount 去挂载的,我们先找到我们的容器实例id.</p>
+<p>执行<code>docker ps -a |grep demo_docker</code></p>
+<pre><code>c0afd574aea7        busybox                         &quot;/bin/sh&quot;                42 minutes ago      Up 42 minutes </code></pre><p>我们再根据我们的容器ID 去查找挂载信息，执行<code>cat /proc/mounts | grep c0afd574aea7</code></p>
+<pre><code>shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里出现了一个挂载信息，但是这个记录不是我们的重点，我们需要找到<code>overlay2</code>的挂载信息，所以这里我们还需要执行一个命令:<code>cat /proc/mounts | grep system_u:object_r:container_file_t:s0:c740,c923</code></p>
+<pre><code>overlay /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged overlay rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,relatime,lowerdir=/var/lib/docker/overlay2/l/FWESUOVO6DYTXBBJIQBPUWLN6K:/var/lib/docker/overlay2/l/XPKQU6AMUX3AKLAX2BR6V4JQ3R,upperdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/diff,workdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/work 0 0
+shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里<code>overlay</code>挂载并没有和容器id关联起来，所以我们直接根据容器id是找不到 <code>overlay</code>挂载信息的，这里借助了<code>context</code> 去关联的，所以我们通过<code>context</code>就找到了我们挂载的地址啦。我们进入目录看看结果</p>
+<pre><code>[root@host1 l]# ls /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged
+bin  dev  etc  home  proc  root  run  sys  tmp  usr  var</code></pre><p>我们发现这个和我们容器的目录是一致的，我们在这个目录下创建一个新的目录，然后看看容器内部是不是会出现新的目录。<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/Docker%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%9A%94%E7%A6%BB.gif?raw=true" alt="文件系统隔离" title="文件系统隔离"></p>
+<p>上面的图片验证了容器内部的文件内容和挂载的<code>/var/lib/docker/overlay2/ID/merged</code>下是一致的，这就是Docker文件系统隔离的基本原理。</p>
+<h2 id="资源的限制"><a href="#资源的限制" class="headerlink" title="资源的限制"></a>资源的限制</h2><p>玩过 Docker 的同学肯定知道，Docker 还是可以限制资源使用的，比如 CPU 和内存等，那这部分是如何实现的呢？<br>这里就涉及到Linux的另外一个概念<code>Cgroups</code>技术,它是为进程设置资源限制的重要手段，在Linux 中，一切皆文件，所以<code>Cgroups</code>技术也会体现在文件中，我们执行<code>mount -t cgroup</code> 就可以看到<code>Cgroups</code>的挂载情况</p>
+<pre><code>cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd)
+cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,devices)
+cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,net_prio,net_cls)
+cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,hugetlb)
+cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,perf_event)
+cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,freezer)
+cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,blkio)
+cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuacct,cpu)
+cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,pids)
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,memory)
+cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuset)
+</code></pre><p>我们看到上面挂载的目录有包括 <code>cpu</code>和<code>memory</code> 那我们猜测大概就是在这个文件夹下面配置限制信息的了。我们跑一个容器来验证下，执行命令：</p>
+<pre><code>docker run -d --name=&#39;cpu_set_demo&#39; --cpu-period=100000 --cpu-quota=20000 busybox md5sum /dev/urandom </code></pre><p>这个命令表示我们需要启动一个容器，这个容器一直产生随机数进行md5计算来消耗CPU，<code>--cpu-period=100000 --cpu-quota=20000</code>表示限制 CPU 使用率在20%，关于这两个参数的详细说明可以点击<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt" target="_blank" rel="noopener">这里</a></p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/cpuset.png?raw=true" alt="进程top" title="进程top"></p>
+<p>我们查看进程消耗情况发现 刚刚启动的容器资源确实被限制在20%，说明 Docker 的CPU限制参数起作用了，那对应在我们的<code>cgroup</code> 文件夹下面是怎么设置的呢？<br>同样，这里的配置肯定是和容器实例id挂钩的，我的文件路径是在<code>/sys/fs/cgroup/cpu/system.slice/docker-5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036.scope</code>下，<code>5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036</code> 就是我们启动的容器id了。</p>
+<p>切换到上面的文件夹下，查看我们设置的参数：</p>
+<pre><code>[root@host1]# cat cpu.cfs_period_us
+100000
+[root@host1]# cat cpu.cfs_quota_us 
+20000</code></pre><p>发现这里我们的容器启动设置参数一样,也就是说通过这里的文件值来限制容器的cpu使用情况。这里需要注意的是，不同的Linux版本 Docker Cgroup 文件位置可能不一样，有些是在<code>/sys/fs/cgroup/cpu/docker/ID/</code> 下。</p>
+<h2 id="与传统虚拟机技术的区别"><a href="#与传统虚拟机技术的区别" class="headerlink" title="与传统虚拟机技术的区别"></a>与传统虚拟机技术的区别</h2><p>经过前面的进程、文件系统、资源限制分析，详细各位已经对 Docker 的隔离原理有了基本的认识，那么它和传统的虚拟机技术有和区别呢？这里贴一个网上的Docker和虚拟机区别的图</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/docker%20%E4%B8%8E%E4%BC%A0%E7%BB%9F%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8C%BA%E5%88%AB.jpg?raw=true" alt="图片来源极客时间" title="图片来源极客时间"></p>
+<p>这张图应该可以清晰的展示了虚拟机技术和 Docker 技术的区别了，虚拟机技术是完全虚拟出一个单独的系统，有这个系统去处理应用的各种运行请求，所以它实际上对于性能来说是有影响的。而 Docker 技术 完全是依赖 Linux 内核特性 Namespace 和Cgroup 技术来实现的，本质来说：你运行在容器的应用在宿主机来说还是一个普通的进程，还是直接由宿主机来调度的，相对来说，性能的损耗就很少，这也是 Docker 技术的重要优势。</p>
+<p>Docker 技术由于 还是一个普通的进程，所以隔离不是很彻底，还是共用宿主机的内核，在隔离级别和安全性上没有虚拟机高，这也是它的一个劣势。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇文章我通过实践来验证了 Docker 容器技术在进程、文件系统、资源限制的隔离原理，最后也比较了虚拟机和 Docker 技术的区别，总的来说 Docker技术由于是一个普通的宿主机进程，所以具有性能优势，而虚拟机由于完全虚拟系统，所以具备了高隔离性和安全性的优势，两者互有优缺点。不过容器化是当下的趋势，相信随着技术的成熟，目前的隔离不彻底的问题也能解决，容器化走天下不是梦。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a href="http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf" target="_blank" rel="noopener">http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf</a></li>
+<li><a href="https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/" target="_blank" rel="noopener">https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/</a></li>
+<li><a href="https://lwn.net/Articles/259217" target="_blank" rel="noopener">https://lwn.net/Articles/259217</a></li>
+</ol>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
+    </div>
+</article>
+
+
+<p>
+    <a  class="dashang" onclick="dashangToggle()">赏</a>
+</p>
+
+
+<div class="article_copyright">
+    <p><span class="copy-title">文章标题:</span>Docker是如何实现隔离的</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3k</span></p>
+    <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
+    <p><span class="copy-title">发布时间:</span>2020-01-21, 09:36:51</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-29, 21:07:05</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/01/21/docker-islotion/" title="Docker是如何实现隔离的">http://luozhou.top/2020/01/21/docker-islotion/</a>
+    <p>
+        <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
+    </p>
+</div>
+
+
+
+    <div id="comments"></div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+
+<script type="text/javascript">
+    $.getScript('/js/gitalk.js', function () {
+        var gitalk = new Gitalk({
+            clientID: '31c103183ff07b9bd32e',
+            clientSecret: 'a4eab583958f09a3888bf8c9a53eee8ead874948',
+            repo: 'kinglaw1204.github.io',
+            owner: 'kinglaw1204',
+            admin: ['kinglaw1204'],
+            id: decodeURI(location.pathname),
+            distractionFreeMode: 'true',
+            language: 'zh-CN',
+            perPage: parseInt('10',10)
+        })
+        gitalk.render('comments')
+    })
+</script>
+
+
+
+
+    
+
+
+
+
+    </div>
+    <div class="copyright">
+        <p class="footer-entry">©2016-2020 木木匠（罗洲）</p>
+<p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
+
+    </div>
+    <div class="full-toc">
+        <button class="full"><span class="min "></span></button>
+<button class="post-toc-menu"><span class="post-toc-menu-icons"></span></button>
+<div class="post-toc"><span class="post-toc-title">目录</span>
+    <div class="post-toc-content">
+
+    </div>
+</div>
+<a class="" id="rocket" ></a>
+
+    </div>
+</div>
+<div class="acParent"></div>
+
+<div class="hide_box" onclick="dashangToggle()"></div>
+<div class="shang_box">
+    <a class="shang_close"  onclick="dashangToggle()">×</a>
+    <div class="shang_tit">
+        <p>喜欢就点赞,疼爱就打赏</p>
+    </div>
+    <div class="shang_payimg">
+        <div class="pay_img">
+            <img src="/img/alipay.jpg" class="alipay" title="扫码支持">
+            <img src="/img/weixin.jpg" class="weixin" title="扫码支持">
+        </div>
+    </div>
+    <div class="shang_payselect">
+        <span><label><input type="radio" name="pay" checked value="alipay">支付宝</label></span><span><label><input type="radio" name="pay" value="weixin">微信</label></span>
+    </div>
+</div>
+
+
+</body>
+<script src="/js/jquery.pjax.js?v=1：.0.1" ></script>
+
+<script src="/js/script.js?v=1：.0.1" ></script>
+<script>
+    var img_resize = 'default';
+    /*作者、标签的自动补全*/
+    $(function () {
+        $('.search').AutoComplete({
+            'data': ['@木木匠','@今心','#Tomcat','#Docker','#Java','#Consul','#Jvm','#SpringBoot','#字节码','#jvm','#西藏','#攻略',],
+            'itemHeight': 20,
+            'width': 418
+        }).AutoComplete('show');
+    })
+    function initArticle() {
+        /*渲染对应的表格样式*/
+        
+            $(".post .pjax table").addClass("green_title");
+        
+
+        /*渲染打赏样式*/
+        
+        $("input[name=pay]").on("click", function () {
+            if($("input[name=pay]:checked").val()=="weixin"){
+                $(".shang_box .shang_payimg .pay_img").addClass("weixin_img");
+            } else {
+                $(".shang_box .shang_payimg .pay_img").removeClass("weixin_img");
+            }
+        })
+        
+
+        /*高亮代码块行号*/
+        
+        $('pre code').each(function(){
+            var lines = $(this).text().split('\n').length - 1, widther='';
+            if (lines>99) {
+                widther = 'widther'
+            }
+            var $numbering = $('<ul/>').addClass('pre-numbering ' + widther).attr("unselectable","on");
+            $(this).addClass('has-numbering ' + widther)
+                    .parent()
+                    .append($numbering);
+            for(var i=1;i<=lines;i++){
+                $numbering.append($('<li/>').text(i));
+            }
+        });
+        
+
+        /*访问数量*/
+        
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js");
+        
+
+        /*代码高亮，行号对齐*/
+        $('.pre-numbering').css('line-height',$('.has-numbering').css('line-height'));
+
+        
+        
+    }
+
+    /*打赏页面隐藏与展示*/
+    
+    function dashangToggle() {
+        $(".shang_box").fadeToggle();
+        $(".hide_box").fadeToggle();
+    }
+    
+
+</script>
+
+<!--加入行号的高亮代码块样式-->
+
+<style>
+    pre{
+        position: relative;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e2dede;
+        background: #FFF;
+        overflow: hidden;
+    }
+    code.has-numbering{
+        margin-left: 30px;
+    }
+    code.has-numbering.widther{
+        margin-left: 35px;
+    }
+    .pre-numbering{
+        margin: 0px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 20px;
+        padding: 0.5em 3px 0.7em 5px;
+        border-right: 1px solid #C3CCD0;
+        text-align: right;
+        color: #AAA;
+        background-color: ;
+    }
+    .pre-numbering.widther {
+        width: 35px;
+    }
+</style>
+
+<!--自定义样式设置-->
+<style>
+    
+    
+    .nav {
+        width: 542px;
+    }
+    .nav.fullscreen {
+        margin-left: -542px;
+    }
+    .nav-left {
+        width: 120px;
+    }
+    
+    
+    @media screen and (max-width: 1468px) {
+        .nav {
+            width: 492px;
+        }
+        .nav.fullscreen {
+            margin-left: -492px;
+        }
+        .nav-left {
+            width: 100px;
+        }
+    }
+    
+    
+    @media screen and (max-width: 1024px) {
+        .nav {
+            width: 492px;
+            margin-left: -492px
+        }
+        .nav.fullscreen {
+            margin-left: 0;
+        }
+        .nav .hide-list.fullscreen {
+            left: 492px
+        }
+    }
+    
+    @media screen and (max-width: 426px) {
+        .nav {
+            width: 100%;
+        }
+        .nav-left {
+            width: 100%;
+        }
+    }
+    
+    
+    .nav-right .title-list nav a .post-title, .nav-right .title-list #local-search-result a .post-title {
+        color: #383636;
+    }
+    
+    
+    .nav-right .title-list nav a .post-date, .nav-right .title-list #local-search-result a .post-date {
+        color: #5e5e5f;
+    }
+    
+    
+    .nav-right nav a.hover, #local-search-result a.hover{
+        background-color: #e2e0e0;
+    }
+    
+    
+
+    /*列表样式*/
+    
+    .post .pjax article .article-entry>ol, .post .pjax article .article-entry>ul, .post .pjax article>ol, .post .pjax article>ul{
+        border: #e2dede solid 1px;
+        border-radius: 10px;
+        padding: 10px 32px 10px 56px;
+    }
+    .post .pjax article .article-entry li>ol, .post .pjax article .article-entry li>ul,.post .pjax article li>ol, .post .pjax article li>ul{
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+    .post .pjax article .article-entry>ol>li, .post .pjax article .article-entry>ul>li,.post .pjax article>ol>li, .post .pjax article>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    .post .pjax article .article-entry li>ol>li, .post .pjax article .article-entry li>ul>li,.post .pjax article li>ol>li, .post .pjax article li>ul>li{
+        margin-bottom: auto;
+        margin-left: auto;
+    }
+    
+
+    /* 背景图样式 */
+    
+    
+
+
+    /*引用块样式*/
+    
+
+    /*文章列表背景图*/
+    
+    .nav-right:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0.3;
+        background: url("https://i.loli.net/2019/07/22/5d3521411f3f169375.png");
+        background-repeat: no-repeat;
+        background-position: 50% 0;
+        -ms-background-size: cover;
+        -o-background-size: cover;
+        -moz-background-size: cover;
+        -webkit-background-size: cover;
+        background-size: cover;
+    }
+    
+
+    
+    .post .pjax article :not(pre) > code {
+        color: #24292e;
+        font-family: SFMono-Regular,Consolas,Liberation Mono,Menlo,Courier,monospace;
+        background-color: rgba(27,31,35,.05);
+        border-radius: 3px;
+        font-size: 85%;
+        margin: 0;
+        padding: .2em .4em;
+    }
+    
+</style>
+
+
+
+
+
+
+<div class="mobile-menus-out" >
+
+</div>
+<div class="mobile-menus">
+    
+    
+    
+    
+    <a class="dynamic-menu " target="_blank"  href="https://github.com/kinglaw1204">github</a>
+    
+</div>
+
+
+</html>
