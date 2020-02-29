@@ -133,7 +133,7 @@
 
 
 <ul>
-    <li><div class="all active">全部文章<small>(10)</small></div></li>
+    <li><div class="all active">全部文章<small>(12)</small></div></li>
     
         
             
@@ -167,6 +167,14 @@
             
         
     
+        
+            
+            <li><div data-rel="读后感">读后感<small>(2)</small></div>
+                
+            </li>
+            
+        
+    
 </ul>
 <div class="left-bottom">
     <div class="menus">
@@ -179,8 +187,8 @@
     </div>
     <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
 </div>
-<input type="hidden" id="yelog_site_posts_number" value="10">
-<input type="hidden" id="yelog_site_word_count" value="27.5k">
+<input type="hidden" id="yelog_site_posts_number" value="12">
+<input type="hidden" id="yelog_site_word_count" value="29.2k">
 <div style="display: none">
     <span id="busuanzi_value_site_uv"></span>
     <span id="busuanzi_value_site_pv"></span>
@@ -251,6 +259,14 @@
     
     <li class="article-tag-list-item">
         <a class="color3">攻略</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color3">牛虻</a>
+    </li>
+    
+    <li class="article-tag-list-item">
+        <a class="color1">巴黎圣母院</a>
     </li>
     
     <div class="clearfix"></div>
@@ -337,6 +353,22 @@
            data-author="木木匠" >
             <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
             <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
+        <a  class="读后感 "
+           href="/2018/07/06/after-reading-niu-meng/"
+           data-tag="牛虻"
+           data-author="" >
+            <span class="post-title" title="牛虻读后感">牛虻读后感</span>
+            <span class="post-date" title="2018-07-06 22:49:59">2018/07/06</span>
+        </a>
+        
+        <a  class="读后感 "
+           href="/2018/05/08/after-reading-notre-dame/"
+           data-tag="巴黎圣母院"
+           data-author="今心" >
+            <span class="post-title" title="巴黎圣母院读后感">巴黎圣母院读后感</span>
+            <span class="post-date" title="2018-05-08 10:12:44">2018/05/08</span>
         </a>
         
     </nav>
@@ -717,7 +749,7 @@ node_52  207eeb6d-57f2-c65f-0be6-079c402f6afe  172.17.2.2:8300  follower  true  
     /*作者、标签的自动补全*/
     $(function () {
         $('.search').AutoComplete({
-            'data': ['@木木匠','@今心','#Tomcat','#Docker','#Java','#Consul','#Jvm','#SpringBoot','#字节码','#jvm','#西藏','#攻略',],
+            'data': ['@木木匠','@今心','#Tomcat','#Docker','#Java','#Consul','#Jvm','#SpringBoot','#字节码','#jvm','#西藏','#攻略','#牛虻','#巴黎圣母院',],
             'itemHeight': 20,
             'width': 418
         }).AutoComplete('show');
