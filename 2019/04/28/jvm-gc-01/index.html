@@ -254,14 +254,6 @@
             <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
         </a>
         
-        <a  class="Java "
-           href="/2020/02/29/jvm-gc-01/"
-           data-tag="jvm"
-           data-author="" >
-            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
-            <span class="post-date" title="2020-02-29 13:51:19">2020/02/29</span>
-        </a>
-        
         <a  class="Tomcat "
            href="/2020/02/28/tomcat-synchrony/"
            data-tag="Tomcat"
@@ -318,6 +310,14 @@
             <span class="post-date" title="2019-08-12 08:51:24">2019/08/12</span>
         </a>
         
+        <a  class="Java "
+           href="/2019/04/28/jvm-gc-01/"
+           data-tag="jvm"
+           data-author="" >
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
+            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
     </nav>
 </div>
     </div>
@@ -354,7 +354,7 @@
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-02-29 14:02:31'>2020-02-29 13:51</time>
+        创建时间:<time class="date" title='更新时间: 2020-02-29 14:18:06'>2019-04-28 13:51</time>
         
     </div>
     <div class="article-meta">
@@ -406,7 +406,8 @@
     <div class="article-entry" itemprop="articleBody">
       
         <h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h2><p>笔者最近在复习JVM的知识，本着记录分享的精神，整理下学习Java虚拟机垃圾回收相关知识点，由于整个垃圾回收内容比较多，我将整理成上下两篇文章去分享，上篇我会主要分享Java虚拟机的运行时数据区域划分，垃圾回收算法。下篇文章主要分享Java虚拟机的垃圾回收器以及一些虚拟机调优建议。</p>
-<h2 id="二、运行时数据区"><a href="#二、运行时数据区" class="headerlink" title="二、运行时数据区"></a>二、运行时数据区</h2><p>Java虚拟机定义了程序在运行期间的多种数据区域，其中有些区域是在Java虚拟机创建的时候就创建了，只有在虚拟机退出后才会被销毁。根据Java虚拟机定义，我们可以数据区域做如下区分，分为：堆、Java虚拟机栈、程序计数器、方法区（元数据区、运行时常量池、本地方法栈。下面我们来详细介绍下每个区域的作用。<br><img src="https://oscimg.oschina.net/oscnet/a1bd35664589e337c15ac39f5e797de1e23.jpg" alt=""></p>
+<h2 id="二、运行时数据区"><a href="#二、运行时数据区" class="headerlink" title="二、运行时数据区"></a>二、运行时数据区</h2><p>Java虚拟机定义了程序在运行期间的多种数据区域，其中有些区域是在Java虚拟机创建的时候就创建了，只有在虚拟机退出后才会被销毁。根据Java虚拟机定义，我们可以数据区域做如下区分，分为：堆、Java虚拟机栈、程序计数器、方法区（元数据区、运行时常量池、本地方法栈。下面我们来详细介绍下每个区域的作用。</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/runtime-area.png?raw=true" alt=""></p>
 <h3 id="2-1-程序计数器"><a href="#2-1-程序计数器" class="headerlink" title="2.1 程序计数器"></a>2.1 程序计数器</h3><p>程序计数器是一块线程私有的区域，是一个较小的内存块，用来存放当前线程执行的字节码的指令地址，如果执行的是本地方法（Native),这个计数器就会为空（Undefined)。</p>
 <h3 id="2-2-Java虚拟机栈"><a href="#2-2-Java虚拟机栈" class="headerlink" title="2.2 Java虚拟机栈"></a>2.2 Java虚拟机栈</h3><p>Java虚拟机栈是线程私有的区域，生命周期与线程相同，它存储的是栈帧（Stack Frame),栈帧会来存储局部变量表、操作数栈、动态链接、方法出口和返回地址等信息。每一个方法从调用到执行完成的过程，都对应着一个栈帧在虚拟机栈中入栈到出栈的过程。如果线程请求的栈深度大于虚拟机所允许的最大深度，就会抛出StackOverflowError异常；如果申请栈内存不够，也会导致抛出OutOfMemoryError异常。</p>
 <pre><code>Jvm参数 
@@ -475,9 +476,9 @@
     <p><span class="copy-title">文章标题:</span>Java虚拟机垃圾回收相关知识点全梳理（上）</p>
     <p><span class="copy-title">文章字数:</span><span class="post-count">3.2k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
-    <p><span class="copy-title">发布时间:</span>2020-02-29, 13:51:19</p>
-    <p><span class="copy-title">最后更新:</span>2020-02-29, 14:02:31</p>
-    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/02/29/jvm-gc-01/" title="Java虚拟机垃圾回收相关知识点全梳理（上）">http://luozhou.top/2020/02/29/jvm-gc-01/</a>
+    <p><span class="copy-title">发布时间:</span>2019-04-28, 13:51:19</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-29, 14:18:06</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/04/28/jvm-gc-01/" title="Java虚拟机垃圾回收相关知识点全梳理（上）">http://luozhou.top/2019/04/28/jvm-gc-01/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
     </p>
