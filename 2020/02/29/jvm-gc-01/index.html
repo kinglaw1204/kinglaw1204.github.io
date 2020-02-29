@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Docker是如何实现隔离的 | 匠人的小屋</title>
-  <meta name="keywords" content=" Docker ">
-  <meta name="description" content="Docker是如何实现隔离的 | 匠人的小屋">
+  <title>Java虚拟机垃圾回收相关知识点全梳理（上） | 匠人的小屋</title>
+  <meta name="keywords" content=" jvm ">
+  <meta name="description" content="Java虚拟机垃圾回收相关知识点全梳理（上） | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="前言通过我之前的Tomcat系列文章，相信看我博客的同学对Tomcat应该有一个比较清晰的了解了，在前几篇博客我们讨论了Tomcat在SpringBoot框架中是如何启动的，讨论了Tomcat的内部组件是如何设计以及请求是如何流转的，那么我们这篇博客聊聊Tomcat的异步Servlet，Tomcat是如何实现异步Servlet的以及异步Servlet的使用场景。 手撸一个异步的Servlet我们">
 <meta property="og:type" content="article">
@@ -330,9 +330,9 @@
 </aside>
 <div class="post">
     <div class="pjax">
-        <article id="post-docker-islotion" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-jvm-gc-01" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">Docker是如何实现隔离的</h1>
+        <h1 class="article-title">Java虚拟机垃圾回收相关知识点全梳理（上）</h1>
     
     <div class="article-meta">
         
@@ -340,26 +340,26 @@
         
         <span class="book">
             
-                <a  data-rel="Docker">Docker</a>
+                <a  data-rel="Java">Java</a>
             
         </span>
         
         
         <span class="tag">
             
-            <a class="color2">Docker</a>
+            <a class="color4">jvm</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-02-29 09:13:07'>2020-01-21 09:36</time>
+        创建时间:<time class="date" title='更新时间: 2020-02-29 14:02:31'>2020-02-29 13:51</time>
         
     </div>
     <div class="article-meta">
         
-        <span>字数:3k</span>
+        <span>字数:3.2k</span>
         
         
         <span id="busuanzi_container_page_pv">
@@ -389,7 +389,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从运行一个容器开始"><span class="toc-text">从运行一个容器开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进程的隔离"><span class="toc-text">进程的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件的隔离"><span class="toc-text">文件的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#资源的限制"><span class="toc-text">资源的限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#与传统虚拟机技术的区别"><span class="toc-text">与传统虚拟机技术的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一、前言"><span class="toc-text">一、前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二、运行时数据区"><span class="toc-text">二、运行时数据区</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-程序计数器"><span class="toc-text">2.1 程序计数器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-Java虚拟机栈"><span class="toc-text">2.2 Java虚拟机栈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3本地方法栈"><span class="toc-text">2.3本地方法栈</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-堆"><span class="toc-text">2.4 堆</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-方法区（元数据区）"><span class="toc-text">2.5 方法区（元数据区）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-1运行时常量池"><span class="toc-text">2.5.1运行时常量池</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三、垃圾判定算法"><span class="toc-text">三、垃圾判定算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-引用计数算法"><span class="toc-text">3.1 引用计数算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-可达性分析算法"><span class="toc-text">3.2 可达性分析算法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四、垃圾回收算法"><span class="toc-text">四、垃圾回收算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-标记-清除算法"><span class="toc-text">4.1 标记-清除算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-复制算法"><span class="toc-text">4.2 复制算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-标记-压缩算法"><span class="toc-text">4.3 标记-压缩算法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#八、总结"><span class="toc-text">八、总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#九、参考"><span class="toc-text">九、参考</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -405,127 +405,60 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><img src="https://cdn.pixabay.com/photo/2015/01/15/14/51/wal-600387_1280.png" alt=""></p>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>容器化技术在当前云计算、微服务等体系下大行其道，而 Docker 便是容器化技术的典型，对于容器化典型的技术，我们有必要弄懂它，所以这篇文章，我会来分析下 Docker 是如何实现隔离技术的，Docker 与虚拟机又有哪些区别呢？接下来，我们开始逐渐揭开它的面纱。</p>
-<h2 id="从运行一个容器开始"><a href="#从运行一个容器开始" class="headerlink" title="从运行一个容器开始"></a>从运行一个容器开始</h2><p>我们开始运行一个简单的容器，这里以<code>busybox</code>镜像为例，它是一个常用的Linux工具箱，可以用来执行很多Linux命令，我们以它为镜像启动容器方便来查看容器内部环境。<br>执行命令：</p>
-<pre><code>docker run -it --name demo_docker busybox /bin/sh</code></pre><p>这条命令的意思是：启动一个<code>busybox</code>镜像的 Docker 容器，<code>-it</code>参数表示给容器提供一个输出/输出的交互环境，也就是TTY。<code>/bin/sh</code>表示容器交互运行的命令或者程序。</p>
-<h2 id="进程的隔离"><a href="#进程的隔离" class="headerlink" title="进程的隔离"></a>进程的隔离</h2><p>执行成功后我们就会进入到了 Docker 容器内部,我们执行<code>ps -ef</code> 查看进程</p>
-<pre><code>/ # ps -ef
-PID   USER     TIME  COMMAND
-    1 root      0:00 /bin/sh
-    8 root      0:00 ps -ef</code></pre><p>使用<code>top</code>命令查看进程资源</p>
-<pre><code>Mem: 1757172K used, 106080K free, 190676K shrd, 129872K buff, 998704K cached
-CPU:  0.0% usr  0.2% sys  0.0% nic 99.6% idle  0.0% io  0.0% irq  0.0% sirq
-Load average: 0.00 0.01 0.05 2/497 9
-  PID  PPID USER     STAT   VSZ %VSZ CPU %CPU COMMAND
-    1     0 root     S     1300  0.0   1  0.0 /bin/sh
-    9     1 root     R     1292  0.0   3  0.0 top</code></pre><p>而我们在宿主机查看下当前执行容器的进程<code>ps -ef|grep busybox</code></p>
-<pre><code>root       5866   5642  0 01:19 pts/4    00:00:00 /usr/bin/docker-current run -it --name demo_docker busybox /bin/sh
-root       5952   5759  0 01:20 pts/11   00:00:00 grep --color=auto busybox</code></pre><p>这里我们可以知道，对于宿主机 <code>docker run</code>执行命令启动的只是一个进程，它的<code>pid</code>是5866。而对于容器程序本身来说，它被隔离了，在容器内部都只能看到自己内部的进程，那 Docker 是如何做到的呢？它其实是借助了Linux内核的<code>Namespace</code>技术来实现的，这里我结合一段C程序来模拟一下进程的隔离。</p>
-<pre><code>#define _GNU_SOURCE
-#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-#include &lt;sys/wait.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;sched.h&gt;
-#include &lt;signal.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;sys/mount.h&gt;
-/* 定义一个给 clone 用的栈，栈大小1M */
-#define STACK_SIZE (1024 * 1024)
-static char container_stack[STACK_SIZE];
-
-char* const container_args[] = {
-    &quot;/bin/bash&quot;,
-    NULL
-};
-
-
-int container_main(void* arg)
-{
-    printf(&quot;容器进程[%5d] ----进入容器!\n&quot;,getpid());
-    mount(&quot;proc&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, NULL);
-    /**执行/bin/bash */
-    execv(container_args[0], container_args);
-    printf(&quot;出错啦!\n&quot;);
-    return 1;
-}
-
-int main()
-{
-    printf(&quot;宿主机进程[%5d] - 开始一个容器!\n&quot;,getpid());
-    /* 调用clone函数 */
-    int container_pid = clone(container_main, container_stack+STACK_SIZE,  CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
-    /* 等待子进程结束 */
-    waitpid(container_pid, NULL, 0);
-    printf(&quot;宿主机 - 容器结束!\n&quot;);
-    return 0;
-}</code></pre><p>考虑到很多同学对C语言不是很熟悉，我这里简单解释下这段程序，这段程序主要就是执行<code>clone()</code>函数，去克隆一个进程，而克隆执行的程序就是我们的<code>container_main</code>函数，接着下一个参数就是栈空间，然后<code>CLONE_NEWPID</code>和<code>CLONE_NEWNS</code> 表示Linux NameSpace的调用类别，分别表示创建新的进程命名空间和 挂载命名空间。</p>
+        <h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h2><p>笔者最近在复习JVM的知识，本着记录分享的精神，整理下学习Java虚拟机垃圾回收相关知识点，由于整个垃圾回收内容比较多，我将整理成上下两篇文章去分享，上篇我会主要分享Java虚拟机的运行时数据区域划分，垃圾回收算法。下篇文章主要分享Java虚拟机的垃圾回收器以及一些虚拟机调优建议。</p>
+<h2 id="二、运行时数据区"><a href="#二、运行时数据区" class="headerlink" title="二、运行时数据区"></a>二、运行时数据区</h2><p>Java虚拟机定义了程序在运行期间的多种数据区域，其中有些区域是在Java虚拟机创建的时候就创建了，只有在虚拟机退出后才会被销毁。根据Java虚拟机定义，我们可以数据区域做如下区分，分为：堆、Java虚拟机栈、程序计数器、方法区（元数据区、运行时常量池、本地方法栈。下面我们来详细介绍下每个区域的作用。<br><img src="https://oscimg.oschina.net/oscnet/a1bd35664589e337c15ac39f5e797de1e23.jpg" alt=""></p>
+<h3 id="2-1-程序计数器"><a href="#2-1-程序计数器" class="headerlink" title="2.1 程序计数器"></a>2.1 程序计数器</h3><p>程序计数器是一块线程私有的区域，是一个较小的内存块，用来存放当前线程执行的字节码的指令地址，如果执行的是本地方法（Native),这个计数器就会为空（Undefined)。</p>
+<h3 id="2-2-Java虚拟机栈"><a href="#2-2-Java虚拟机栈" class="headerlink" title="2.2 Java虚拟机栈"></a>2.2 Java虚拟机栈</h3><p>Java虚拟机栈是线程私有的区域，生命周期与线程相同，它存储的是栈帧（Stack Frame),栈帧会来存储局部变量表、操作数栈、动态链接、方法出口和返回地址等信息。每一个方法从调用到执行完成的过程，都对应着一个栈帧在虚拟机栈中入栈到出栈的过程。如果线程请求的栈深度大于虚拟机所允许的最大深度，就会抛出StackOverflowError异常；如果申请栈内存不够，也会导致抛出OutOfMemoryError异常。</p>
+<pre><code>Jvm参数 
+-Xss:栈空间大小；栈的空间大小决定了栈能创建的深度</code></pre><p>栈结构如下：</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/stack.png?raw=true" alt=""></p>
+<h3 id="2-3本地方法栈"><a href="#2-3本地方法栈" class="headerlink" title="2.3本地方法栈"></a>2.3本地方法栈</h3><p>本地方法栈和java方法栈非常类似，他们之前的区别主要是Java方法栈是提供给字节码服务的，本地方法栈是给本地方法（C语言实现）调用服务的。Java虚拟机并没有对本地方法栈中使用的语言、数据结构等进行强制规定，所以虚拟机可以自行实现它。Sun HotSpot虚拟机把虚拟机栈和Java方法栈进行了合二为一。本地方法栈也会和虚拟机栈一样抛出StackOverFlowError和OutOfMemoryError异常。</p>
+<h3 id="2-4-堆"><a href="#2-4-堆" class="headerlink" title="2.4 堆"></a>2.4 堆</h3><p>Java堆是一个所有线程共享的区域，堆用来存储几乎所有对象的实例和数组，堆按照分代的思想进行划分，可以划分了新生代（YoungGeneration)和老年代(Old/Tenured Generation)，新生代又可进一步细分为 eden、survivor space0（s0 或者 from space）和 survivor space1（s1或者to space）。我们用图来表示下堆的划分：</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/heap.png?raw=true" alt=""></p>
+<p>eden区：新建对象一般都放在该区域，除非是新建了大对象，该区域放不下就直接存放在老年代（Tenured)。<br>S0和S1区：该区域放置的对象至少经历了一次垃圾回收（Minor GC）,如果经历了多次回收，到达指定次数还存活，那么就会被转移到老年代。</p>
+<p>Java虚拟机规范规定堆可以是物理上不连续的空间，只需要逻辑上连续即可，我们可以通过命令（-Xmx和-Xms ）来调整堆空间，如果申请的堆内存超过了堆的最大内存，将会抛出OutOfMemoryError异常。</p>
+<pre><code>Jvm参数
+ -Xmx:最大堆空间大小
+ -Xms:最小堆空间大小
+ -Xmn:新生代空间大小</code></pre><h3 id="2-5-方法区（元数据区）"><a href="#2-5-方法区（元数据区）" class="headerlink" title="2.5 方法区（元数据区）"></a>2.5 方法区（元数据区）</h3><p>方法区是线程共享的区域，它用于存放已经被虚拟机加载的类信息、常量池、静态变量、即时编译器编译后的代码等数据。类信息包括类的完整名称、父类的完整名称、类型修饰符（public/protected/private）和类型的直接接口类表；常量池指运行时常量池（后面有介绍）；方法区又被称为非堆（Non-Heap)。</p>
+<p>在Host Spot虚拟机的实现中，方法区也被称为永久区，是一块独立于 Java 堆的内存空间。虽然叫永久区，但是永久区中的对象同样可以被 GC 回收的（注：方法区是 JVM 的一种规范，永久区是一种具体实现，在 Java8 中，永久区已经被 Metaspace 元空间取而代之。相应的，<code>JVM参数 PermSize 和 MaxPermSize 被 MetaSpaceSize 和 MaxMetaSpaceSize 取代</code>）。对永久区 GC 的回收，通常主要从两个方面分析：一是 GC 对永久区常量池的回收；二是永久区对类元数据的回收。</p>
+<p>当方法区无法满足内存分配需求时，将抛出OutOfMemoryError异常。</p>
+<h3 id="2-5-1运行时常量池"><a href="#2-5-1运行时常量池" class="headerlink" title="2.5.1运行时常量池"></a>2.5.1运行时常量池</h3><p>运行时常量池（Run-Time Constant Pool）是方法区的一部分，它主要用来存放编译期生成的各种<a href="https://baike.baidu.com/item/%E5%AD%97%E9%9D%A2%E9%87%8F" target="_blank" rel="noopener">字面量</a>和符号引用，既然是运行时常量池，理所应当的可以存放运行时产生的常量，比如调用<code>String.intern()</code>方法产生的字符串常量就会被放入运行池常量中。</p>
+<h2 id="三、垃圾判定算法"><a href="#三、垃圾判定算法" class="headerlink" title="三、垃圾判定算法"></a>三、垃圾判定算法</h2><h3 id="3-1-引用计数算法"><a href="#3-1-引用计数算法" class="headerlink" title="3.1 引用计数算法"></a>3.1 引用计数算法</h3><p>引用计数法的思想比较简单，每个对象都有一个引用计数器，只要对象被引用，计数器就+1，当对象不再被引用时候，计数器就减一。这种算法很高效，但是有一个致命缺点，就是有循环引用的问题。对于两个无用对象的互相引用，就会导致两个对象的计数器不为0，从而无法被判定为无用对象，无法回收内存。</p>
+<h3 id="3-2-可达性分析算法"><a href="#3-2-可达性分析算法" class="headerlink" title="3.2 可达性分析算法"></a>3.2 可达性分析算法</h3><p>由于引用计数法有互相引用的缺陷，所以Java虚拟机采用了可达性分析算法来判定垃圾对象。这个算法的思想是，以一系列称为“GC Roots”的对象作为起始点，从这些起点往下搜索，搜索所走过的路径称为引用链（Referenc Chain),当一个对象到GC Roots没有任何引用链（从GC Roots到这个对象不可达）时，就说明这个对象不可用，可以被回收。</p>
+<p>可以作为GC Roots的对象包括：</p>
 <ul>
-<li><p><code>CLONE_NEWPID</code>会让执行的程序内部重新编号<code>PID</code>，也就是从<code>1</code>号进程开始</p>
+<li>虚拟机栈中引用的对象(局部变量)。</li>
+<li>方法区中类静态属性引用的对象（静态变量）。</li>
+<li>方法区中常量引用的对象（常量）。</li>
+<li>本地方法栈中JNI(即本地方法)引用的对象。</li>
+</ul>
+<p><strong>那为什么上面四种对象就可以作为GC Roots呢？</strong></p>
+<p>1.虚拟机栈中当前引用的对象，因为虚拟机栈中的对象是随着线程的生命周期存活的，那么在垃圾判断的时候，当前线程还存活，也就意味着栈中持有的对象肯定是存活的，所以可以作为GC Roots，本地方法栈也是一样的道理。</p>
+<p>2.对于方法区中的静态变量引用和常量，我的理解是使用方法区中的对象作为GC Roots并不是一定就会以里面所有的对象作为GC Roots,虽然Java虚拟机并没有规定方法区要进行回收，但是该区域在目前的JVM实现中都有回收，由于方法区也会对“废弃常量”和“无用类”进行回收，所以选择GC Roots只会选择方法区内的有效对象。”废弃常量”判断比较简单，对于“无用类”的判断，Java虚拟机只会判断动态加载的类，对于原始加载的类，虚拟机永远不会自动卸载。所以判断动态加载的类为无用类可以有以下原则：</p>
+<ul>
+<li>该类所有的实例都已经被回收，堆中不存在该类的任何实例。</li>
+<li>该类对于的类加载器已经被回收</li>
+<li>该类对应的java.lang.Class对象没有在任何地方引用，无法通过反射访问该类的方法。<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/gcroots.png?raw=true" alt=""></li>
+</ul>
+<h2 id="四、垃圾回收算法"><a href="#四、垃圾回收算法" class="headerlink" title="四、垃圾回收算法"></a>四、垃圾回收算法</h2><h3 id="4-1-标记-清除算法"><a href="#4-1-标记-清除算法" class="headerlink" title="4.1 标记-清除算法"></a>4.1 标记-清除算法</h3><p>标记-清除算法分为“标记”和“清除”两个阶段，首先需要标记出需要回收的对象，标记完成后再进行统一的垃圾回收。该算法有两个缺点：1.效率不高；2.清除后会产生大量不连续的内存碎片，内存碎片会导致分配大对象时候，无法找到足够的内存，从而提前触发一次GC.</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/mark-clean.png?raw=true" alt=""></p>
+<h3 id="4-2-复制算法"><a href="#4-2-复制算法" class="headerlink" title="4.2 复制算法"></a>4.2 复制算法</h3><p>上面的标记清除算法效率不高，为了解决这个问题，就有了复制算法，复制算法就是把内存容量划分为大小相等的两块，每次只用其中一块，当一块内存用完后就将存活的对象复制到另外一块内存上，然后再对原内存块进行清理。这种算法的优点就是内存分配不用考虑碎片的问题，只需要移动堆顶的内存指针，按顺序分配内存即可。但是这算法的缺点就是空间利用率不高，将内存缩小为原来的一半，有一半的内存没有被真正利用起来。</p>
+<p>虽然内存利用率不高，但是目前的虚拟机中堆中的新生代就是采用这种算法进行垃圾回收的。上面我们提到新生代分为 eden 空间、form 空间和 to空间3个部分。其中 from 和 to 空间可以视为用于复制的两块大小相同、地位相等，且可进行角色互换的空间块。from 和 to 空间也称为 survivor 空间，即幸存者空间，用于存放未被回收的对象。</p>
+<p>在垃圾回收时，eden空间中存活的对象会被复制到未使用的survivor空间中（假设是 to），正在使用的survivor空间（假设是 from）中的年轻对象也会被复制到to空间中（大对象或者老年对象会直接进入老年代，如果to空间已满，则对象也会进入老年代）。此时eden和from空间中剩余对象就是垃圾对象，直接清空，to空间则存放此次回收后存活下来的对象。</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/copy-clean.png?raw=true" alt=""></p>
+<h3 id="4-3-标记-压缩算法"><a href="#4-3-标记-压缩算法" class="headerlink" title="4.3 标记-压缩算法"></a>4.3 标记-压缩算法</h3><p>复制算法只适用于存活率较低的新生代中，如果存活率较高就需要进行过多的复制操作，效率将会降低。老年代的存活率比较高，所以复制算法不适用于老年代的场景，之前提到的“标记-清除”算法，如果不会产生内存碎片的话，还是可以满足老年代的，那么有没有不产生碎片的类似算法呢？答案是有，“标记-整理”算法就派上用处了。它的核心思想是：先对可回收对象进行标记，然后把所有存活的对象移动到一端，接着直接清理掉边界意外的内存区域。因为清理过后，存活对象都紧密的在一端，所以不会产生内存碎片。</p>
+<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Jvm-gc-01/mark-zip.png?raw=true" alt=""></p>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>本篇文章我整理了Java虚拟机的运行区划分，每个区域的作用，同时分享了垃圾判断算法和垃圾回收算法。运行时数据区划分为：程序计数器、Java虚拟机栈、本地方法栈、堆、方法区、运行时常量池。有的文章中提到Jdk1.7及以后的版本把运行时常量从方法区移除，这里我想说明下，Java虚拟机规范还是要求在方法区分配，这只是个别虚拟机的自己实现，比如说Hot Spot虚拟机。</p>
+<p>垃圾判定算法现在虚拟机主要使用可达性分析算法，垃圾回收算法有“标记-清除”算法、“复制”算法、“标记-整理”算法。“复制”算法比较适合存活对象较少的新生代，“标记-整理”算法比较适合老年代，整理的作用就是为了有连续的内存空间，防止内存碎片太多无法存放大对象。</p>
+<h2 id="九、参考"><a href="#九、参考" class="headerlink" title="九、参考"></a>九、参考</h2><ul>
+<li><p>《深入理解jvm虚拟机 第二版》</p>
 </li>
-<li><p><code>CLONE_NEWNS</code> 会克隆新的挂载环境出来，通过在子进程内部重新挂载<code>proc</code>文件夹，可以屏蔽父进程的进程信息。</p>
+<li><p><a href="https://docs.oracle.com/javase/specs/jvms/se12/html/jvms-2.html" target="_blank" rel="noopener">Java虚拟机规范第12版</a></p>
+</li>
+<li><p><a href="http://mihaimoldovan.com/download/Inside-Java-Virtual-Machine.pdf" target="_blank" rel="noopener">《Inside Java Virtual Machine》</a></p>
 </li>
 </ul>
-<p>我们执行一下这段程序来看看效果。</p>
-<p><strong>编译</strong></p>
-<pre><code>gcc container.c -o container</code></pre><p><strong>执行</strong></p>
-<pre><code>[root@host1 luozhou]# ./container 
-宿主机进程[ 6061] - 开始一个容器!
-容器进程[    1] ----进入容器!</code></pre><p>这里我们看到输出在宿主机看来，这个程序的<code>PID</code>是<code>6061</code>，在克隆的子进程来看，它的<code>PID</code>是<code>1</code>，我们执行<code>ps -ef</code> 查看一下进程列表</p>
-<pre><code>[root@host1 luozhou]# ps -ef
-UID         PID   PPID  C STIME TTY          TIME CMD
-root          1      0  0 01:46 pts/2    00:00:00 /bin/bash
-root         10      1  0 01:48 pts/2    00:00:00 ps -ef</code></pre><p>我们发现确实只有容器内部的进程在运行了，再执行<code>top</code>命令</p>
-<pre><code>
-   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                  
-     1 root      20   0  115576   2112   1628 S   0.0  0.1   0:00.00 bash                                                                                                     
-    11 root      20   0  161904   2124   1544 R   0.0  0.1   0:00.00 top  </code></pre><p>结果也只有2个进程的信息。</p>
-<p>这就是容器隔离进程的基本原理了，Docker主要就是借助 Linux 内核技术Namespace来做到隔离的，其实包括我后面要说到文件的隔离，资源的隔离都是在新的命名空间下通过<code>mount</code>挂载的方式来隔离的。</p>
-<h2 id="文件的隔离"><a href="#文件的隔离" class="headerlink" title="文件的隔离"></a>文件的隔离</h2><p>了解完进程的隔离，相信你们已经对 Docker 容器的隔离玩法就大概的印象了，我们接下来看看，Docker 内部的文件系统如何隔离，也就是你在 Docker 内部执行 <code>ls</code> 显示的文件夹和文件如何来的。</p>
-<p>我们还是以前面的 Docker 命令为例，执行<code>ls</code></p>
-<pre><code>bin   dev   etc   home  proc  root  run   sys   tmp   usr   var</code></pre><p>我们发现容器内部已经包含了这些文件夹了，那么这些文件夹哪里来的呢？我们先执行<code>docker info</code>来看看我们的 Docker 用到的文件系统是什么？</p>
-<pre><code>Server Version: 1.13.1
-Storage Driver: overlay2</code></pre><p>我的版本是1.13.1，存储驱动是<code>overlay2</code>,不同的存储驱动在 Docker 中表现不一样，但是原理类似，我们来看看 Docker 如何借助<code>overlay2</code>来变出这么多文件夹的。我们前面提到过，Docker都是通过mount 去挂载的,我们先找到我们的容器实例id.</p>
-<p>执行<code>docker ps -a |grep demo_docker</code></p>
-<pre><code>c0afd574aea7        busybox                         &quot;/bin/sh&quot;                42 minutes ago      Up 42 minutes </code></pre><p>我们再根据我们的容器ID 去查找挂载信息，执行<code>cat /proc/mounts | grep c0afd574aea7</code></p>
-<pre><code>shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里出现了一个挂载信息，但是这个记录不是我们的重点，我们需要找到<code>overlay2</code>的挂载信息，所以这里我们还需要执行一个命令:<code>cat /proc/mounts | grep system_u:object_r:container_file_t:s0:c740,c923</code></p>
-<pre><code>overlay /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged overlay rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,relatime,lowerdir=/var/lib/docker/overlay2/l/FWESUOVO6DYTXBBJIQBPUWLN6K:/var/lib/docker/overlay2/l/XPKQU6AMUX3AKLAX2BR6V4JQ3R,upperdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/diff,workdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/work 0 0
-shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里<code>overlay</code>挂载并没有和容器id关联起来，所以我们直接根据容器id是找不到 <code>overlay</code>挂载信息的，这里借助了<code>context</code> 去关联的，所以我们通过<code>context</code>就找到了我们挂载的地址啦。我们进入目录看看结果</p>
-<pre><code>[root@host1 l]# ls /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged
-bin  dev  etc  home  proc  root  run  sys  tmp  usr  var</code></pre><p>我们发现这个和我们容器的目录是一致的，我们在这个目录下创建一个新的目录，然后看看容器内部是不是会出现新的目录。<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/Docker%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%9A%94%E7%A6%BB.gif?raw=true" alt="文件系统隔离" title="文件系统隔离"></p>
-<p>上面的图片验证了容器内部的文件内容和挂载的<code>/var/lib/docker/overlay2/ID/merged</code>下是一致的，这就是Docker文件系统隔离的基本原理。</p>
-<h2 id="资源的限制"><a href="#资源的限制" class="headerlink" title="资源的限制"></a>资源的限制</h2><p>玩过 Docker 的同学肯定知道，Docker 还是可以限制资源使用的，比如 CPU 和内存等，那这部分是如何实现的呢？<br>这里就涉及到Linux的另外一个概念<code>Cgroups</code>技术,它是为进程设置资源限制的重要手段，在Linux 中，一切皆文件，所以<code>Cgroups</code>技术也会体现在文件中，我们执行<code>mount -t cgroup</code> 就可以看到<code>Cgroups</code>的挂载情况</p>
-<pre><code>cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd)
-cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,devices)
-cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,net_prio,net_cls)
-cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,hugetlb)
-cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,perf_event)
-cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,freezer)
-cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,blkio)
-cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuacct,cpu)
-cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,pids)
-cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,memory)
-cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuset)
-</code></pre><p>我们看到上面挂载的目录有包括 <code>cpu</code>和<code>memory</code> 那我们猜测大概就是在这个文件夹下面配置限制信息的了。我们跑一个容器来验证下，执行命令：</p>
-<pre><code>docker run -d --name=&#39;cpu_set_demo&#39; --cpu-period=100000 --cpu-quota=20000 busybox md5sum /dev/urandom </code></pre><p>这个命令表示我们需要启动一个容器，这个容器一直产生随机数进行md5计算来消耗CPU，<code>--cpu-period=100000 --cpu-quota=20000</code>表示限制 CPU 使用率在20%，关于这两个参数的详细说明可以点击<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt" target="_blank" rel="noopener">这里</a></p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/cpuset.png?raw=true" alt="进程top" title="进程top"></p>
-<p>我们查看进程消耗情况发现 刚刚启动的容器资源确实被限制在20%，说明 Docker 的CPU限制参数起作用了，那对应在我们的<code>cgroup</code> 文件夹下面是怎么设置的呢？<br>同样，这里的配置肯定是和容器实例id挂钩的，我的文件路径是在<code>/sys/fs/cgroup/cpu/system.slice/docker-5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036.scope</code>下，<code>5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036</code> 就是我们启动的容器id了。</p>
-<p>切换到上面的文件夹下，查看我们设置的参数：</p>
-<pre><code>[root@host1]# cat cpu.cfs_period_us
-100000
-[root@host1]# cat cpu.cfs_quota_us 
-20000</code></pre><p>发现这里我们的容器启动设置参数一样,也就是说通过这里的文件值来限制容器的cpu使用情况。这里需要注意的是，不同的Linux版本 Docker Cgroup 文件位置可能不一样，有些是在<code>/sys/fs/cgroup/cpu/docker/ID/</code> 下。</p>
-<h2 id="与传统虚拟机技术的区别"><a href="#与传统虚拟机技术的区别" class="headerlink" title="与传统虚拟机技术的区别"></a>与传统虚拟机技术的区别</h2><p>经过前面的进程、文件系统、资源限制分析，详细各位已经对 Docker 的隔离原理有了基本的认识，那么它和传统的虚拟机技术有和区别呢？这里贴一个网上的Docker和虚拟机区别的图</p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/docker%20%E4%B8%8E%E4%BC%A0%E7%BB%9F%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8C%BA%E5%88%AB.jpg?raw=true" alt="图片来源极客时间" title="图片来源极客时间"></p>
-<p>这张图应该可以清晰的展示了虚拟机技术和 Docker 技术的区别了，虚拟机技术是完全虚拟出一个单独的系统，有这个系统去处理应用的各种运行请求，所以它实际上对于性能来说是有影响的。而 Docker 技术 完全是依赖 Linux 内核特性 Namespace 和Cgroup 技术来实现的，本质来说：你运行在容器的应用在宿主机来说还是一个普通的进程，还是直接由宿主机来调度的，相对来说，性能的损耗就很少，这也是 Docker 技术的重要优势。</p>
-<p>Docker 技术由于 还是一个普通的进程，所以隔离不是很彻底，还是共用宿主机的内核，在隔离级别和安全性上没有虚拟机高，这也是它的一个劣势。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇文章我通过实践来验证了 Docker 容器技术在进程、文件系统、资源限制的隔离原理，最后也比较了虚拟机和 Docker 技术的区别，总的来说 Docker技术由于是一个普通的宿主机进程，所以具有性能优势，而虚拟机由于完全虚拟系统，所以具备了高隔离性和安全性的优势，两者互有优缺点。不过容器化是当下的趋势，相信随着技术的成熟，目前的隔离不彻底的问题也能解决，容器化走天下不是梦。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
-<li><a href="http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf" target="_blank" rel="noopener">http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf</a></li>
-<li><a href="https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/" target="_blank" rel="noopener">https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/</a></li>
-<li><a href="https://lwn.net/Articles/259217" target="_blank" rel="noopener">https://lwn.net/Articles/259217</a></li>
-</ol>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
@@ -539,12 +472,12 @@ cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,sec
 
 
 <div class="article_copyright">
-    <p><span class="copy-title">文章标题:</span>Docker是如何实现隔离的</p>
-    <p><span class="copy-title">文章字数:</span><span class="post-count">3k</span></p>
+    <p><span class="copy-title">文章标题:</span>Java虚拟机垃圾回收相关知识点全梳理（上）</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3.2k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
-    <p><span class="copy-title">发布时间:</span>2020-01-21, 09:36:51</p>
-    <p><span class="copy-title">最后更新:</span>2020-02-29, 09:13:07</p>
-    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/01/21/docker-islotion/" title="Docker是如何实现隔离的">http://luozhou.top/2020/01/21/docker-islotion/</a>
+    <p><span class="copy-title">发布时间:</span>2020-02-29, 13:51:19</p>
+    <p><span class="copy-title">最后更新:</span>2020-02-29, 14:02:31</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/02/29/jvm-gc-01/" title="Java虚拟机垃圾回收相关知识点全梳理（上）">http://luozhou.top/2020/02/29/jvm-gc-01/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
     </p>
