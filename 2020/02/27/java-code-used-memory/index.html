@@ -453,7 +453,7 @@
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-02-29 21:07:09'>2020-02-27 10:31</time>
+        创建时间:<time class="date" title='更新时间: 2020-03-03 11:52:53'>2020-02-27 10:31</time>
         
     </div>
     <div class="article-meta">
@@ -509,9 +509,9 @@
 <blockquote>
 <p>本文环境：jdk1.8_64</p>
 </blockquote>
-<h2 id="Java-对象头内存模型"><a href="#Java-对象头内存模型" class="headerlink" title="Java 对象头内存模型"></a>Java 对象头内存模型</h2><p>我们先来看看，一个Java 对象的内存模型是怎么样的？由于我们的虚拟机是分为32位和64位，那肯定它们的模型也是有区别的，下面我列出列32位虚拟机和64位虚拟机下的<code>Java</code>对象头内存模型。<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/32%E4%BD%8DJava%E5%AF%B9%E8%B1%A1%E5%A4%B4.png?raw=true" alt="32位虚拟机" title="32位虚拟机"></p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/64%E4%BD%8Djava%E5%AF%B9%E8%B1%A1%E5%A4%B4.png?raw=true" alt="64位虚拟机" title="64位虚拟机"></p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/64%E4%BD%8Djava%E5%AF%B9%E8%B1%A1%E5%A4%B4%EF%BC%88%E6%8C%87%E9%92%88%E5%8E%8B%E7%BC%A9%EF%BC%89.png?raw=true" alt="64位带指针压缩" title="64位带指针压缩"></p>
+<h2 id="Java-对象头内存模型"><a href="#Java-对象头内存模型" class="headerlink" title="Java 对象头内存模型"></a>Java 对象头内存模型</h2><p>我们先来看看，一个Java 对象的内存模型是怎么样的？由于我们的虚拟机是分为32位和64位，那肯定它们的模型也是有区别的，下面我列出列32位虚拟机和64位虚拟机下的<code>Java</code>对象头内存模型。<br><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfre0b6j21xq0ps191.jpg" alt="32位虚拟机"></p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrguhaj21zo0ni4dn.jpg" alt="64位虚拟机"></p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrhfbjj220w0n0h0x.jpg" alt="64位带指针压缩"></p>
 <p>因为笔者的本地环境是<code>jdk1.8</code>,64位虚拟机，这里我以64位虚拟机（开启指针压缩）来分析，因为默认情况下，<code>jdk1.8</code> 在64位虚拟机默认开启指针压缩。</p>
 <p>Java 对象头主要包括两部分，第一部分就是 <code>Mark Word</code>，这也是 <code>Java</code> 锁实现原理中重要的一环，另外一部分是 <code>Klass Word</code>。</p>
 <p><strong>Klass Word</strong>  这里其实是虚拟机设计的一个<code>oop-klass model</code>模型，这里的<code>OOP</code>是指<code>Ordinary Object Pointer</code>（普通对象指针），看起来像个指针实际上是藏在指针里的对象。而 <code>klass</code> 则包含 元数据和方法信息，用来描述 <code>Java</code> 类。它在64位虚拟机开启压缩指针的环境下占用 32bits 空间。</p>
@@ -543,18 +543,20 @@ public class NullObject {
 <pre><code> public static void main(String[] args) {
         System.out.println(ClassLayout.parseInstance(new NullObject()).toPrintable());
     }</code></pre><p>上面这行代码会解析你新建一个NullObject对象，占用了多少内存。我们执行看看结果如何：</p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/nullObject%20%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8.png?raw=true" alt="内存占用" title="内存占用"></p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfroknnj21p80bijtk.jpg" alt="内存占用"></p>
 <p>这里我们发现结果显示：<code>Instance size：16 bytes</code>,结果就是16字节，我们之前预测的12字节不一样，为什么会这样呢？我们看到上图中有3行 object header，每个占用4字节，所以头部就是12字节，这里和我们的计算是一致的，最后一行是虚拟机填充的4字节，<strong>那为什么虚拟机要填充4个字节呢？</strong></p>
 <h2 id="内存对齐"><a href="#内存对齐" class="headerlink" title="内存对齐"></a>内存对齐</h2><p>想要知道为什么虚拟机要填充4个字节，我们需要了解什么是内存对齐？</p>
-<p>我们程序员看内存是这样的：<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E7%A8%8B%E5%BA%8F%E5%91%98%E5%A6%82%E4%BD%95%E7%9C%8B%E5%86%85%E5%AD%98.png?raw=true" alt=""></p>
+<p>我们程序员看内存是这样的：</p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrboktj20b9033dfs.jpg" alt=""></p>
 <p>上图表示一个坑一个萝卜的内存读取方式。但实际上 CPU 并不会以一个一个字节去读取和写入内存。相反 CPU 读取内存是一块一块读取的，块的大小可以为 2、4、6、8、16 字节等大小。块大小我们称其为内存访问粒度。如下图：</p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E5%A4%84%E7%90%86%E5%99%A8%E5%A6%82%E4%BD%95%E7%9C%8B%E5%86%85%E5%AD%98.png?raw=true" alt=""></p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrkdcfj20hh03ddfu.jpg" alt=""></p>
 <p>假设一个32位平台的 CPU，那它就会以4字节为粒度去读取内存块。那为什么需要内存对齐呢？主要有两个原因：</p>
 <ul>
 <li>平台（移植性）原因：不是所有的硬件平台都能够访问任意地址上的任意数据。例如：特定的硬件平台只允许在特定地址获取特定类型的数据，否则会导致异常情况。</li>
 <li>性能原因：若访问未对齐的内存，将会导致 CPU 进行两次内存访问，并且要花费额外的时钟周期来处理对齐及运算。而本身就对齐的内存仅需要一次访问就可以完成读取动作。</li>
 </ul>
-<p>我用图例来说明 CPU 访问非内存对齐的过程：<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90-%E5%86%85%E5%AD%98%E8%AF%BB%E5%8F%96%E8%BF%87%E7%A8%8B.png?raw=true" alt=""></p>
+<p>我用图例来说明 CPU 访问非内存对齐的过程：</p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrf3r0j20e80acwew.jpg" alt=""></p>
 <p>在上图中，假设CPU 是一次读取4字节，在这个连续的8字节的内存空间中，如果我的数据没有对齐，存储的内存块在地址1，2，3，4中，那CPU的读取就会需要进行两次读取，另外还有额外的计算操作：</p>
 <ol>
 <li>CPU 首次读取未对齐地址的第一个内存块，读取 0-3 字节。并移除不需要的字节 0。</li>
@@ -576,7 +578,8 @@ public class NullObject {
         System.out.println(GraphLayout.parseInstance(new TestNotNull()).toPrintable());
         //打印对象的所有内存结果并统计
          System.out.println(GraphLayout.parseInstance(new TestNotNull()).toFootprint());
-    }</code></pre><p>结果如下：<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Java%E5%AF%B9%E8%B1%A1%E5%86%85%E5%AD%98%E5%8D%A0%E7%94%A8/jol%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%E5%92%8C%E7%BB%9F%E8%AE%A1%E8%AF%A6%E6%83%85.png?raw=true" alt=""></p>
+    }</code></pre><p>结果如下：</p>
+<p><img src="http://ww1.sinaimg.cn/large/a3a1b4f8gy1gcglfrq8v7j21w00woafm.jpg" alt=""></p>
 <p>我们可以看到<code>TestNotNull</code>的类占用空间是24字节，其中头部占用12字节，变量<code>a</code>是<code>int</code>类型，占用4字节,变量<code>nullObject</code>是引用，占用了4字节，最后填充了4个字节，总共是24个字节，与我们之前的预测一致。<strong>但是，因为我们实例化了<code>NullObject</code>,这个对象一会存在于内存中，所以我们还需要加上这个对象的内存占用16字节，那总共就是24bytes+16bytes=40bytes。我们图中最后的统计打印结果也是40字节，所以我们的分析正确。</strong></p>
 <p>这也是如何分析一个对象真正的占用多少内存的思路，根据这个思路加上openJDK的jol工具就可以基本的掌握自己写的“对象”究竟败家了你多少内存。</p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文我主要讲述了如何分析一个Java对象究竟占用多少内存空间，主要总结点如下：</p>
@@ -606,7 +609,7 @@ public class NullObject {
     <p><span class="copy-title">文章字数:</span><span class="post-count">2.4k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
     <p><span class="copy-title">发布时间:</span>2020-02-27, 10:31:08</p>
-    <p><span class="copy-title">最后更新:</span>2020-02-29, 21:07:09</p>
+    <p><span class="copy-title">最后更新:</span>2020-03-03, 11:52:53</p>
     <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/02/27/java-code-used-memory/" title="你写的Java对象究竟占多少内存？">http://luozhou.top/2020/02/27/java-code-used-memory/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
