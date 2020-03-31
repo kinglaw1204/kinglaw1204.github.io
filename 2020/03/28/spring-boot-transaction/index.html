@@ -6,19 +6,19 @@
   <meta name="keywords" content=" Spring Boot , 事务 ">
   <meta name="description" content="Spring Boot中的事务是如何实现的 | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta name="description" content="概述一直在用SpringBoot中的@Transactional来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看@Transactional是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。  阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。  事务的相关知识开始看源码之前，我们先回顾">
+<meta name="description" content="1.概述一直在用SpringBoot中的@Transactional来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看@Transactional是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。  阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。  2.事务的相关知识开始看源码之前，我">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring Boot中的事务是如何实现的">
 <meta property="og:url" content="http://luozhou.top/2020/03/28/spring-boot-transaction/index.html">
 <meta property="og:site_name" content="匠人的小屋">
-<meta property="og:description" content="概述一直在用SpringBoot中的@Transactional来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看@Transactional是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。  阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。  事务的相关知识开始看源码之前，我们先回顾">
+<meta property="og:description" content="1.概述一直在用SpringBoot中的@Transactional来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看@Transactional是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。  阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。  2.事务的相关知识开始看源码之前，我">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://cdn.pixabay.com/photo/2020/03/18/06/06/street-4942809_1280.jpg">
 <meta property="og:image" content="https://s1.ax1x.com/2020/03/29/GV0aOx.png">
 <meta property="og:image" content="https://oscimg.oschina.net/oscnet/up-dbd04bcead04db61095a10ccb95b9708435.gif">
 <meta property="og:image" content="https://oscimg.oschina.net/oscnet/up-d53fcc045c4e87ea4317409245aa9b6b54a.gif">
 <meta property="article:published_time" content="2020-03-28T06:50:37.000Z">
-<meta property="article:modified_time" content="2020-03-31T02:46:20.713Z">
+<meta property="article:modified_time" content="2020-03-31T02:51:26.292Z">
 <meta property="article:author" content="木木匠">
 <meta property="article:tag" content="Spring Boot">
 <meta property="article:tag" content="事务">
@@ -213,7 +213,7 @@
     <div><a class="about  hasFriend  site_url"  href="/about">关于</a><a style="width: 50%"  class="friends">友链</a></div>
 </div>
 <input type="hidden" id="yelog_site_posts_number" value="15">
-<input type="hidden" id="yelog_site_word_count" value="39.4k">
+<input type="hidden" id="yelog_site_word_count" value="39.5k">
 <div style="display: none">
     <span id="busuanzi_value_site_uv"></span>
     <span id="busuanzi_value_site_pv"></span>
@@ -312,76 +312,12 @@
     
     <nav id="title-list-nav">
         
-        <a  class="Java "
-           href="/2020/03/28/spring-boot-transaction/"
-           data-tag="Spring Boot,事务"
-           data-author="木木匠" >
-            <span class="post-title" title="Spring Boot中的事务是如何实现的">Spring Boot中的事务是如何实现的</span>
-            <span class="post-date" title="2020-03-28 14:50:37">2020/03/28</span>
-        </a>
-        
-        <a  class="旅游 "
-           href="/2020/02/29/Tibet-Travel-Guide/"
-           data-tag="西藏,攻略"
-           data-author="今心" >
-            <span class="post-title" title="西藏旅游⊙准备篇">西藏旅游⊙准备篇</span>
-            <span class="post-date" title="2020-02-29 20:55:33">2020/02/29</span>
-        </a>
-        
-        <a  class="Tomcat "
-           href="/2020/02/28/tomcat-synchrony/"
-           data-tag="Tomcat"
-           data-author="木木匠" >
-            <span class="post-title" title="Tomcat是如何实现异步Servlet的">Tomcat是如何实现异步Servlet的</span>
-            <span class="post-date" title="2020-02-28 08:43:24">2020/02/28</span>
-        </a>
-        
-        <a  class="Java "
-           href="/2020/02/27/java-code-used-memory/"
-           data-tag="Java,Jvm"
-           data-author="木木匠" >
-            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
-            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
-        </a>
-        
-        <a  class="Docker "
-           href="/2020/01/21/docker-islotion/"
-           data-tag="Docker"
-           data-author="木木匠" >
-            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
-            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
-        </a>
-        
-        <a  class="Java "
-           href="/2019/12/30/analyse-java-code/"
-           data-tag="字节码"
-           data-author="木木匠" >
-            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
-            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
-        </a>
-        
-        <a  class="Docker "
-           href="/2019/12/04/deploy-consul-docker/"
-           data-tag="Docker,Consul"
-           data-author="木木匠" >
-            <span class="post-title" title="Consul集群版容器化部署与应用集成">Consul集群版容器化部署与应用集成</span>
-            <span class="post-date" title="2019-12-04 08:40:49">2019/12/04</span>
-        </a>
-        
         <a  class="Tomcat "
            href="/2019/09/09/Tomcat-container/"
            data-tag="Tomcat"
            data-author="木木匠" >
             <span class="post-title" title="Tomcat中的容器是如何处理请求的">Tomcat中的容器是如何处理请求的</span>
             <span class="post-date" title="2019-09-09 08:45:24">2019/09/09</span>
-        </a>
-        
-        <a  class="Tomcat "
-           href="/2019/08/26/Tomcat-connector/"
-           data-tag="Tomcat"
-           data-author="木木匠" >
-            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
-            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
         </a>
         
         <a  class="Tomcat "
@@ -393,11 +329,75 @@
         </a>
         
         <a  class="Java "
-           href="/2019/05/09/gc-jvm-02/"
+           href="/2019/12/30/analyse-java-code/"
+           data-tag="字节码"
+           data-author="木木匠" >
+            <span class="post-title" title="从1+1=2来理解Java字节码">从1+1=2来理解Java字节码</span>
+            <span class="post-date" title="2019-12-30 08:36:40">2019/12/30</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2020/01/21/docker-islotion/"
+           data-tag="Docker"
+           data-author="木木匠" >
+            <span class="post-title" title="Docker是如何实现隔离的">Docker是如何实现隔离的</span>
+            <span class="post-date" title="2020-01-21 09:36:51">2020/01/21</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2020/02/27/java-code-used-memory/"
            data-tag="Java,Jvm"
            data-author="木木匠" >
-            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（下）">Java虚拟机垃圾回收相关知识点全梳理（下）</span>
-            <span class="post-date" title="2019-05-09 10:23:08">2019/05/09</span>
+            <span class="post-title" title="你写的Java对象究竟占多少内存？">你写的Java对象究竟占多少内存？</span>
+            <span class="post-date" title="2020-02-27 10:31:08">2020/02/27</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2019/08/26/Tomcat-connector/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat中的连接器是如何设计的">Tomcat中的连接器是如何设计的</span>
+            <span class="post-date" title="2019-08-26 08:47:10">2019/08/26</span>
+        </a>
+        
+        <a  class="Docker "
+           href="/2019/12/04/deploy-consul-docker/"
+           data-tag="Docker,Consul"
+           data-author="木木匠" >
+            <span class="post-title" title="Consul集群版容器化部署与应用集成">Consul集群版容器化部署与应用集成</span>
+            <span class="post-date" title="2019-12-04 08:40:49">2019/12/04</span>
+        </a>
+        
+        <a  class="Tomcat "
+           href="/2020/02/28/tomcat-synchrony/"
+           data-tag="Tomcat"
+           data-author="木木匠" >
+            <span class="post-title" title="Tomcat是如何实现异步Servlet的">Tomcat是如何实现异步Servlet的</span>
+            <span class="post-date" title="2020-02-28 08:43:24">2020/02/28</span>
+        </a>
+        
+        <a  class="Java "
+           href="/2019/04/28/jvm-gc-01/"
+           data-tag="jvm"
+           data-author="木木匠" >
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
+            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+        </a>
+        
+        <a  class="旅游 "
+           href="/2020/02/29/Tibet-Travel-Guide/"
+           data-tag="西藏,攻略"
+           data-author="今心" >
+            <span class="post-title" title="西藏旅游⊙准备篇">西藏旅游⊙准备篇</span>
+            <span class="post-date" title="2020-02-29 20:55:33">2020/02/29</span>
+        </a>
+        
+        <a  class="读后感 "
+           href="/2018/07/06/after-reading-niu-meng/"
+           data-tag="牛虻"
+           data-author="" >
+            <span class="post-title" title="牛虻读后感">牛虻读后感</span>
+            <span class="post-date" title="2018-07-06 22:49:59">2018/07/06</span>
         </a>
         
         <a  class="读后感 "
@@ -409,11 +409,11 @@
         </a>
         
         <a  class="Java "
-           href="/2019/04/28/jvm-gc-01/"
-           data-tag="jvm"
+           href="/2019/05/09/gc-jvm-02/"
+           data-tag="Java,Jvm"
            data-author="木木匠" >
-            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（上）">Java虚拟机垃圾回收相关知识点全梳理（上）</span>
-            <span class="post-date" title="2019-04-28 13:51:19">2019/04/28</span>
+            <span class="post-title" title="Java虚拟机垃圾回收相关知识点全梳理（下）">Java虚拟机垃圾回收相关知识点全梳理（下）</span>
+            <span class="post-date" title="2019-05-09 10:23:08">2019/05/09</span>
         </a>
         
         <a  class="数据库 MySQL "
@@ -424,12 +424,12 @@
             <span class="post-date" title="2019-04-15 10:44:12">2019/04/15</span>
         </a>
         
-        <a  class="读后感 "
-           href="/2018/07/06/after-reading-niu-meng/"
-           data-tag="牛虻"
-           data-author="" >
-            <span class="post-title" title="牛虻读后感">牛虻读后感</span>
-            <span class="post-date" title="2018-07-06 22:49:59">2018/07/06</span>
+        <a  class="Java "
+           href="/2020/03/28/spring-boot-transaction/"
+           data-tag="Spring Boot,事务"
+           data-author="木木匠" >
+            <span class="post-title" title="Spring Boot中的事务是如何实现的">Spring Boot中的事务是如何实现的</span>
+            <span class="post-date" title="2020-03-28 14:50:37">2020/03/28</span>
         </a>
         
     </nav>
@@ -472,12 +472,12 @@
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-03-31 10:46:20'>2020-03-28 14:50</time>
+        创建时间:<time class="date" title='更新时间: 2020-03-31 10:51:26'>2020-03-28 14:50</time>
         
     </div>
     <div class="article-meta">
         
-        <span>字数:3.2k</span>
+        <span>字数:3.3k</span>
         
         
         <span id="busuanzi_container_page_pv">
@@ -507,7 +507,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#事务的相关知识"><span class="toc-text">事务的相关知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#事务的隔离级别"><span class="toc-text">事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring中事务的传播机制"><span class="toc-text">Spring中事务的传播机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何实现异常回滚的"><span class="toc-text">如何实现异常回滚的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手写一个注解实现事务回滚"><span class="toc-text">手写一个注解实现事务回滚</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-概述"><span class="toc-text">1.概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-事务的相关知识"><span class="toc-text">2.事务的相关知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-事务的隔离级别"><span class="toc-text">2.1 事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-Spring中事务的传播机制"><span class="toc-text">2.2 Spring中事务的传播机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-如何实现异常回滚的"><span class="toc-text">3.如何实现异常回滚的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-手写一个注解实现事务回滚"><span class="toc-text">4.手写一个注解实现事务回滚</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1首先加入依赖"><span class="toc-text">4.1首先加入依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2新增一个注解"><span class="toc-text">4.2新增一个注解</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-新增连接管理器"><span class="toc-text">4.3 新增连接管理器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-新增一个切面"><span class="toc-text">4.4 新增一个切面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-测试验证"><span class="toc-text">4.5 测试验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-5-1-编写一个Service"><span class="toc-text">4.5.1 编写一个Service</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-5-2-单元测试"><span class="toc-text">4.5.2 单元测试</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-总结"><span class="toc-text">5. 总结</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -524,12 +524,12 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p><img src="https://cdn.pixabay.com/photo/2020/03/18/06/06/street-4942809_1280.jpg" alt=""></p>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>一直在用SpringBoot中的<code>@Transactional</code>来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看<code>@Transactional</code>是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。</p>
+<h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1.概述"></a>1.概述</h2><p>一直在用SpringBoot中的<code>@Transactional</code>来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看<code>@Transactional</code>是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。</p>
 <blockquote>
 <p>阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。</p>
 </blockquote>
-<h2 id="事务的相关知识"><a href="#事务的相关知识" class="headerlink" title="事务的相关知识"></a>事务的相关知识</h2><p>开始看源码之前，我们先回顾下事务的相关知识。</p>
-<h3 id="事务的隔离级别"><a href="#事务的隔离级别" class="headerlink" title="事务的隔离级别"></a>事务的隔离级别</h3><p>事务为什么需要隔离级别呢？这是因为在并发事务情况下，如果没有隔离级别会导致如下问题：</p>
+<h2 id="2-事务的相关知识"><a href="#2-事务的相关知识" class="headerlink" title="2.事务的相关知识"></a>2.事务的相关知识</h2><p>开始看源码之前，我们先回顾下事务的相关知识。</p>
+<h3 id="2-1-事务的隔离级别"><a href="#2-1-事务的隔离级别" class="headerlink" title="2.1 事务的隔离级别"></a>2.1 事务的隔离级别</h3><p>事务为什么需要隔离级别呢？这是因为在并发事务情况下，如果没有隔离级别会导致如下问题：</p>
 <ul>
 <li><p><strong>脏读(Dirty Read)</strong> ：当A事务对数据进行修改，但是这种修改还没有提交到数据库中，B事务同时在访问这个数据，由于没有隔离，B获取的数据有可能被A事务回滚，这就导致了数据不一致的问题。</p>
 </li>
@@ -571,7 +571,7 @@
 <td>串行化隔离级别，<strong>该级别可以防止脏读、不可重复读以及幻读</strong>，但是串行化会影响性能。</td>
 </tr>
 </tbody></table>
-<h3 id="Spring中事务的传播机制"><a href="#Spring中事务的传播机制" class="headerlink" title="Spring中事务的传播机制"></a>Spring中事务的传播机制</h3><p>为什么Spring中要搞一套事务的传播机制呢？这是Spring给我们提供的事务增强工具，主要是解决方法之间调用，事务如何处理的问题。比如有方法A、方法B和方法C，在A中调用了方法B和方法C。伪代码如下：</p>
+<h3 id="2-2-Spring中事务的传播机制"><a href="#2-2-Spring中事务的传播机制" class="headerlink" title="2.2 Spring中事务的传播机制"></a>2.2 Spring中事务的传播机制</h3><p>为什么Spring中要搞一套事务的传播机制呢？这是Spring给我们提供的事务增强工具，主要是解决方法之间调用，事务如何处理的问题。比如有方法A、方法B和方法C，在A中调用了方法B和方法C。伪代码如下：</p>
 <pre><code>MethodA{
     MethodB；
     MethodC;
@@ -620,7 +620,7 @@ MethodC{
 </tr>
 </tbody></table>
 <p>这七种传播机制是如何影响事务的，感兴趣的同学可以阅读<a href="https://segmentfault.com/a/1190000013341344" target="_blank" rel="noopener">这篇文章</a>。</p>
-<h2 id="如何实现异常回滚的"><a href="#如何实现异常回滚的" class="headerlink" title="如何实现异常回滚的"></a>如何实现异常回滚的</h2><p>回顾完了事务的相关知识，接下来我们正式来研究下Spring Boot中如何通过<code>@Transactional</code>来管理事务的，我们重点看看它是如何实现回滚的。</p>
+<h2 id="3-如何实现异常回滚的"><a href="#3-如何实现异常回滚的" class="headerlink" title="3.如何实现异常回滚的"></a>3.如何实现异常回滚的</h2><p>回顾完了事务的相关知识，接下来我们正式来研究下Spring Boot中如何通过<code>@Transactional</code>来管理事务的，我们重点看看它是如何实现回滚的。</p>
 <p>在Spring中<code>TransactionInterceptor</code>和<code>PlatformTransactionManager</code>这两个类是整个事务模块的核心，<code>TransactionInterceptor</code>负责拦截方法执行，进行判断是否需要提交或者回滚事务。<code>PlatformTransactionManager</code>是Spring 中的事务管理接口，真正定义了事务如何回滚和提交。我们重点研究下这两个类的源码。</p>
 <p><code>TransactionInterceptor</code>类中的代码有很多，我简化一下逻辑，方便说明：</p>
 <pre><code>    //以下代码省略部分内容
@@ -685,17 +685,15 @@ protected void completeTransactionAfterThrowing(@Nullable TransactionInfo txInfo
     }</code></pre><h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>这里小结下Spring 中事务的实现思路，Spring 主要依靠 <code>TransactionInterceptor</code> 来拦截执行方法体，判断是否开启事务，然后执行事务方法体，方法体中<code>catch</code>住异常,接着判断是否需要回滚，如果需要回滚就委托真正的<code>TransactionManager</code> 比如JDBC中的<code>DataSourceTransactionManager</code>来执行回滚逻辑。提交事务也是同样的道理。</p>
 <p>这里用个流程图展示下思路：</p>
 <p><img src="https://s1.ax1x.com/2020/03/29/GV0aOx.png" alt="GV0aOx.png"></p>
-<h2 id="手写一个注解实现事务回滚"><a href="#手写一个注解实现事务回滚" class="headerlink" title="手写一个注解实现事务回滚"></a>手写一个注解实现事务回滚</h2><p>我们弄清楚了Spring的事务执行流程，那我们可以模仿着自己写一个注解，实现遇到指定异常就回滚的功能。这里持久层就以最简单的JDBC为例。我们先梳理下需求，首先注解我们可以基于Spring 的AOP来实现，接着既然是JDBC,那么我们需要一个类来帮我们管理连接，用来判断异常是否回滚或者提交。梳理完就开干吧。</p>
-<p><strong>首先加入依赖</strong></p>
-<pre><code>             &lt;dependency&gt;
+<h2 id="4-手写一个注解实现事务回滚"><a href="#4-手写一个注解实现事务回滚" class="headerlink" title="4.手写一个注解实现事务回滚"></a>4.手写一个注解实现事务回滚</h2><p>我们弄清楚了Spring的事务执行流程，那我们可以模仿着自己写一个注解，实现遇到指定异常就回滚的功能。这里持久层就以最简单的JDBC为例。我们先梳理下需求，首先注解我们可以基于Spring 的AOP来实现，接着既然是JDBC,那么我们需要一个类来帮我们管理连接，用来判断异常是否回滚或者提交。梳理完就开干吧。</p>
+<h3 id="4-1首先加入依赖"><a href="#4-1首先加入依赖" class="headerlink" title="4.1首先加入依赖"></a>4.1首先加入依赖</h3><pre><code>             &lt;dependency&gt;
             &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
             &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
         &lt;/dependency&gt;
         &lt;dependency&gt;
             &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
             &lt;artifactId&gt;spring-boot-starter-aop&lt;/artifactId&gt;
-        &lt;/dependency&gt;</code></pre><p><strong>新增一个注解</strong></p>
-<pre><code class="java">/**
+        &lt;/dependency&gt;</code></pre><h3 id="4-2新增一个注解"><a href="#4-2新增一个注解" class="headerlink" title="4.2新增一个注解"></a>4.2新增一个注解</h3><pre><code class="java">/**
  * @description:
  * @author: luozhou 
  * @create: 2020-03-29 17:05
@@ -708,8 +706,7 @@ public @interface MyTransaction {
     //指定异常回滚
     Class&lt;? extends Throwable&gt;[] rollbackFor() default {};
 }</code></pre>
-<p><strong>新增连接管理器</strong></p>
-<p>该类帮助我们管理连接，该类的核心功能是把取出的连接对象绑定到线程上，方便在AOP处理中取出，进行提交或者回滚操作。</p>
+<h3 id="4-3-新增连接管理器"><a href="#4-3-新增连接管理器" class="headerlink" title="4.3 新增连接管理器"></a>4.3 新增连接管理器</h3><p>该类帮助我们管理连接，该类的核心功能是把取出的连接对象绑定到线程上，方便在AOP处理中取出，进行提交或者回滚操作。</p>
 <pre><code class="java">/**
  * @description:
  * @author: luozhou 
@@ -752,8 +749,7 @@ public class DataSourceConnectHolder {
         resources.remove();
     }
 }</code></pre>
-<p><strong>新增一个切面</strong></p>
-<p>这部分是事务处理的核心，先获取注解上的异常类，然后捕获住执行的异常，判断异常是不是注解上的异常或者其子类，如果是就回滚，否则就提交。</p>
+<h3 id="4-4-新增一个切面"><a href="#4-4-新增一个切面" class="headerlink" title="4.4 新增一个切面"></a>4.4 新增一个切面</h3><p>这部分是事务处理的核心，先获取注解上的异常类，然后捕获住执行的异常，判断异常是不是注解上的异常或者其子类，如果是就回滚，否则就提交。</p>
 <pre><code class="java">/**
  * @description:
  * @author: luozhou 
@@ -835,8 +831,7 @@ public class MyTransactionAopHandler {
         doCommit();
     }
 }</code></pre>
-<p><strong>测试验证</strong></p>
-<p>创建一个tb_test表，表结构如下：</p>
+<h3 id="4-5-测试验证"><a href="#4-5-测试验证" class="headerlink" title="4.5 测试验证"></a>4.5 测试验证</h3><p>创建一个tb_test表，表结构如下：</p>
 <pre><code class="sql">SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -851,7 +846,7 @@ CREATE TABLE `tb_test` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 SET FOREIGN_KEY_CHECKS = 1;</code></pre>
-<p>编写一个Service，<code>saveTest</code>方法调用了2个插入语句，同时声明了<code>@MyTransaction</code>事务注解，遇到<code>NullPointerException</code>就进行回滚，最后我们执行了除以0操作，会抛出<code>ArithmeticException</code>。我们用单元测试看看数据是否会回滚。</p>
+<h4 id="4-5-1-编写一个Service"><a href="#4-5-1-编写一个Service" class="headerlink" title="4.5.1 编写一个Service"></a>4.5.1 编写一个Service</h4><p><code>saveTest</code>方法调用了2个插入语句，同时声明了<code>@MyTransaction</code>事务注解，遇到<code>NullPointerException</code>就进行回滚，最后我们执行了除以0操作，会抛出<code>ArithmeticException</code>。我们用单元测试看看数据是否会回滚。</p>
 <pre><code class="Java">/**
  * @description:
  * @author: luozhou kinglaw1204@gmail.com
@@ -885,8 +880,7 @@ public class MyTransactionTest implements TestService {
     }
 
 }</code></pre>
-<p>单元测试</p>
-<pre><code class="java">@SpringBootTest
+<h4 id="4-5-2-单元测试"><a href="#4-5-2-单元测试" class="headerlink" title="4.5.2 单元测试"></a>4.5.2 单元测试</h4><pre><code class="java">@SpringBootTest
 @RunWith(SpringRunner.class)
 class SpringTransactionApplicationTests {
     @Autowired
@@ -902,7 +896,7 @@ class SpringTransactionApplicationTests {
 <p>上图代码声明了事务对<code>NullPointerException</code>异常进行回滚，运行中遇到了<code>ArithmeticException</code>异常，所以是不会回滚的，我们在右边的数据库中刷新发现数据正常插入成功了，说明并没有回滚。</p>
 <p><img src="https://oscimg.oschina.net/oscnet/up-d53fcc045c4e87ea4317409245aa9b6b54a.gif" alt=""></p>
 <p>我们把回滚的异常类改为<code>ArithmeticException</code>,把原数据清空再执行一次，出现了<code>ArithmeticException</code>异常，这个时候查看数据库是没有记录新增成功了，这说明事物进行回滚了，表明我们的注解起作用了。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文最开始回顾了事务的相关知识，并发事务会导致<strong>脏读</strong>、<strong>丢失修改</strong>、<strong>不可重复读</strong>、<strong>幻读</strong>，为了解决这些问题，数据库中就引入了事务的隔离级别，隔离级别包括：<strong>读未提交</strong>、<strong>读提交</strong>、<strong>可重复读</strong>和<strong>串行化</strong>。</p>
+<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>本文最开始回顾了事务的相关知识，并发事务会导致<strong>脏读</strong>、<strong>丢失修改</strong>、<strong>不可重复读</strong>、<strong>幻读</strong>，为了解决这些问题，数据库中就引入了事务的隔离级别，隔离级别包括：<strong>读未提交</strong>、<strong>读提交</strong>、<strong>可重复读</strong>和<strong>串行化</strong>。</p>
 <p>Spring中增强了事务的概念，为了解决方法A、方法B和方法C之间的事务关系，引入了事务传播机制的概念。</p>
 <p>Spring中的<code>@Transactional</code>注解的事务实现主要通过<code>TransactionInterceptor</code>拦截器来进行实现的，拦截目标方法，然后判断异常是不是目标异常，如果是目标异常就行进行回滚，否则就进行事务提交。</p>
 <p>最后我们自己通过JDBC结合Spring的AOP自己写了个<code>@MyTransactional</code>的注解，实现了遇到指定异常回滚的功能。</p>
@@ -920,10 +914,10 @@ class SpringTransactionApplicationTests {
 
 <div class="article_copyright">
     <p><span class="copy-title">文章标题:</span>Spring Boot中的事务是如何实现的</p>
-    <p><span class="copy-title">文章字数:</span><span class="post-count">3.2k</span></p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3.3k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
     <p><span class="copy-title">发布时间:</span>2020-03-28, 14:50:37</p>
-    <p><span class="copy-title">最后更新:</span>2020-03-31, 10:46:20</p>
+    <p><span class="copy-title">最后更新:</span>2020-03-31, 10:51:26</p>
     <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/03/28/spring-boot-transaction/" title="Spring Boot中的事务是如何实现的">http://luozhou.top/2020/03/28/spring-boot-transaction/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
