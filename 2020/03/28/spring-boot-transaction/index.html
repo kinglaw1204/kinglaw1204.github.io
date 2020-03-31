@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Docker是如何实现隔离的 | 匠人的小屋</title>
-  <meta name="keywords" content=" Docker ">
-  <meta name="description" content="Docker是如何实现隔离的 | 匠人的小屋">
+  <title>Spring Boot中的事务是如何实现的 | 匠人的小屋</title>
+  <meta name="keywords" content=" Spring Boot , 事务 ">
+  <meta name="description" content="Spring Boot中的事务是如何实现的 | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
 <meta property="og:type" content="article">
@@ -439,38 +439,38 @@
 </aside>
 <div class="post">
     <div class="pjax">
-        <article id="post-docker-islotion" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-spring-boot-transaction" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">Docker是如何实现隔离的</h1>
+        <h1 class="article-title">Spring Boot中的事务是如何实现的</h1>
     
     <div class="article-meta">
         
         
-        <span class="author"><a>木木匠</a></span>
-        
         
         <span class="book">
             
-                <a  data-rel="Docker">Docker</a>
+                <a  data-rel="Java">Java</a>
             
         </span>
         
         
         <span class="tag">
             
-            <a class="color2">Docker</a>
+            <a class="color2">Spring Boot</a>
+            
+            <a class="color3">事务</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-02-29 21:07:05'>2020-01-21 09:36</time>
+        创建时间:<time class="date" title='更新时间: 2020-03-31 10:43:41'>2020-03-28 14:50</time>
         
     </div>
     <div class="article-meta">
         
-        <span>字数:3k</span>
+        <span>字数:3.2k</span>
         
         
         <span id="busuanzi_container_page_pv">
@@ -500,7 +500,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#从运行一个容器开始"><span class="toc-text">从运行一个容器开始</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进程的隔离"><span class="toc-text">进程的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件的隔离"><span class="toc-text">文件的隔离</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#资源的限制"><span class="toc-text">资源的限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#与传统虚拟机技术的区别"><span class="toc-text">与传统虚拟机技术的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#事务的相关知识"><span class="toc-text">事务的相关知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#事务的隔离级别"><span class="toc-text">事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring中事务的传播机制"><span class="toc-text">Spring中事务的传播机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何实现异常回滚的"><span class="toc-text">如何实现异常回滚的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#小结"><span class="toc-text">小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#手写一个注解实现事务回滚"><span class="toc-text">手写一个注解实现事务回滚</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -516,127 +516,389 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><img src="https://cdn.pixabay.com/photo/2015/01/15/14/51/wal-600387_1280.png" alt=""></p>
-<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>容器化技术在当前云计算、微服务等体系下大行其道，而 Docker 便是容器化技术的典型，对于容器化典型的技术，我们有必要弄懂它，所以这篇文章，我会来分析下 Docker 是如何实现隔离技术的，Docker 与虚拟机又有哪些区别呢？接下来，我们开始逐渐揭开它的面纱。</p>
-<h2 id="从运行一个容器开始"><a href="#从运行一个容器开始" class="headerlink" title="从运行一个容器开始"></a>从运行一个容器开始</h2><p>我们开始运行一个简单的容器，这里以<code>busybox</code>镜像为例，它是一个常用的Linux工具箱，可以用来执行很多Linux命令，我们以它为镜像启动容器方便来查看容器内部环境。<br>执行命令：</p>
-<pre><code>docker run -it --name demo_docker busybox /bin/sh</code></pre><p>这条命令的意思是：启动一个<code>busybox</code>镜像的 Docker 容器，<code>-it</code>参数表示给容器提供一个输出/输出的交互环境，也就是TTY。<code>/bin/sh</code>表示容器交互运行的命令或者程序。</p>
-<h2 id="进程的隔离"><a href="#进程的隔离" class="headerlink" title="进程的隔离"></a>进程的隔离</h2><p>执行成功后我们就会进入到了 Docker 容器内部,我们执行<code>ps -ef</code> 查看进程</p>
-<pre><code>/ # ps -ef
-PID   USER     TIME  COMMAND
-    1 root      0:00 /bin/sh
-    8 root      0:00 ps -ef</code></pre><p>使用<code>top</code>命令查看进程资源</p>
-<pre><code>Mem: 1757172K used, 106080K free, 190676K shrd, 129872K buff, 998704K cached
-CPU:  0.0% usr  0.2% sys  0.0% nic 99.6% idle  0.0% io  0.0% irq  0.0% sirq
-Load average: 0.00 0.01 0.05 2/497 9
-  PID  PPID USER     STAT   VSZ %VSZ CPU %CPU COMMAND
-    1     0 root     S     1300  0.0   1  0.0 /bin/sh
-    9     1 root     R     1292  0.0   3  0.0 top</code></pre><p>而我们在宿主机查看下当前执行容器的进程<code>ps -ef|grep busybox</code></p>
-<pre><code>root       5866   5642  0 01:19 pts/4    00:00:00 /usr/bin/docker-current run -it --name demo_docker busybox /bin/sh
-root       5952   5759  0 01:20 pts/11   00:00:00 grep --color=auto busybox</code></pre><p>这里我们可以知道，对于宿主机 <code>docker run</code>执行命令启动的只是一个进程，它的<code>pid</code>是5866。而对于容器程序本身来说，它被隔离了，在容器内部都只能看到自己内部的进程，那 Docker 是如何做到的呢？它其实是借助了Linux内核的<code>Namespace</code>技术来实现的，这里我结合一段C程序来模拟一下进程的隔离。</p>
-<pre><code>#define _GNU_SOURCE
-#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-#include &lt;sys/wait.h&gt;
-#include &lt;stdio.h&gt;
-#include &lt;sched.h&gt;
-#include &lt;signal.h&gt;
-#include &lt;unistd.h&gt;
-#include &lt;sys/mount.h&gt;
-/* 定义一个给 clone 用的栈，栈大小1M */
-#define STACK_SIZE (1024 * 1024)
-static char container_stack[STACK_SIZE];
-
-char* const container_args[] = {
-    &quot;/bin/bash&quot;,
-    NULL
-};
-
-
-int container_main(void* arg)
-{
-    printf(&quot;容器进程[%5d] ----进入容器!\n&quot;,getpid());
-    mount(&quot;proc&quot;, &quot;/proc&quot;, &quot;proc&quot;, 0, NULL);
-    /**执行/bin/bash */
-    execv(container_args[0], container_args);
-    printf(&quot;出错啦!\n&quot;);
-    return 1;
-}
-
-int main()
-{
-    printf(&quot;宿主机进程[%5d] - 开始一个容器!\n&quot;,getpid());
-    /* 调用clone函数 */
-    int container_pid = clone(container_main, container_stack+STACK_SIZE,  CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
-    /* 等待子进程结束 */
-    waitpid(container_pid, NULL, 0);
-    printf(&quot;宿主机 - 容器结束!\n&quot;);
-    return 0;
-}</code></pre><p>考虑到很多同学对C语言不是很熟悉，我这里简单解释下这段程序，这段程序主要就是执行<code>clone()</code>函数，去克隆一个进程，而克隆执行的程序就是我们的<code>container_main</code>函数，接着下一个参数就是栈空间，然后<code>CLONE_NEWPID</code>和<code>CLONE_NEWNS</code> 表示Linux NameSpace的调用类别，分别表示创建新的进程命名空间和 挂载命名空间。</p>
+        <p><img src="https://cdn.pixabay.com/photo/2020/03/18/06/06/street-4942809_1280.jpg" alt=""></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>一直在用SpringBoot中的<code>@Transactional</code>来做事务管理，但是很少没想过SpringBoot是如何实现事务管理的，今天从源码入手，看看<code>@Transactional</code>是如何实现事务的，最后我们结合源码的理解，自己动手写一个类似的注解来实现事务管理，帮助我们加深理解。</p>
+<blockquote>
+<p>阅读说明：本文假设你具备Java基础，同时对事务有基本的了解和使用。</p>
+</blockquote>
+<h2 id="事务的相关知识"><a href="#事务的相关知识" class="headerlink" title="事务的相关知识"></a>事务的相关知识</h2><p>开始看源码之前，我们先回顾下事务的相关知识。</p>
+<h3 id="事务的隔离级别"><a href="#事务的隔离级别" class="headerlink" title="事务的隔离级别"></a>事务的隔离级别</h3><p>事务为什么需要隔离级别呢？这是因为在并发事务情况下，如果没有隔离级别会导致如下问题：</p>
 <ul>
-<li><p><code>CLONE_NEWPID</code>会让执行的程序内部重新编号<code>PID</code>，也就是从<code>1</code>号进程开始</p>
+<li><p><strong>脏读(Dirty Read)</strong> ：当A事务对数据进行修改，但是这种修改还没有提交到数据库中，B事务同时在访问这个数据，由于没有隔离，B获取的数据有可能被A事务回滚，这就导致了数据不一致的问题。</p>
 </li>
-<li><p><code>CLONE_NEWNS</code> 会克隆新的挂载环境出来，通过在子进程内部重新挂载<code>proc</code>文件夹，可以屏蔽父进程的进程信息。</p>
+<li><p><strong>丢失修改(Lost To Modify)</strong>: 当A事务访问数据100，并且修改为100-1=99，同时B事务读取数据也是100，修改数据100-1=99，最终两个事务的修改结果为99，但是实际是98。事务A修改的数据被丢失了。</p>
+</li>
+<li><p><strong>不可重复读(Unrepeatable Read)</strong>：指A事务在读取数据X=100的时候，B事务把数据X=100修改为X=200,这个时候A事务第二次读取数据X的时候，发现X=200了，导致了在整个A事务期间，两次读取数据X不一致了，这就是不可重复读。</p>
+</li>
+<li><p><strong>幻读(Phantom Read)</strong>：幻读和不可重复读类似。幻读表现在，当A事务读取表数据时候，只有3条数据，这个时候B事务插入了2条数据，当A事务再次读取的时候，发现有5条记录了，平白无故多了2条记录，就像幻觉一样。</p>
 </li>
 </ul>
-<p>我们执行一下这段程序来看看效果。</p>
-<p><strong>编译</strong></p>
-<pre><code>gcc container.c -o container</code></pre><p><strong>执行</strong></p>
-<pre><code>[root@host1 luozhou]# ./container 
-宿主机进程[ 6061] - 开始一个容器!
-容器进程[    1] ----进入容器!</code></pre><p>这里我们看到输出在宿主机看来，这个程序的<code>PID</code>是<code>6061</code>，在克隆的子进程来看，它的<code>PID</code>是<code>1</code>，我们执行<code>ps -ef</code> 查看一下进程列表</p>
-<pre><code>[root@host1 luozhou]# ps -ef
-UID         PID   PPID  C STIME TTY          TIME CMD
-root          1      0  0 01:46 pts/2    00:00:00 /bin/bash
-root         10      1  0 01:48 pts/2    00:00:00 ps -ef</code></pre><p>我们发现确实只有容器内部的进程在运行了，再执行<code>top</code>命令</p>
-<pre><code>
-   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                                                  
-     1 root      20   0  115576   2112   1628 S   0.0  0.1   0:00.00 bash                                                                                                     
-    11 root      20   0  161904   2124   1544 R   0.0  0.1   0:00.00 top  </code></pre><p>结果也只有2个进程的信息。</p>
-<p>这就是容器隔离进程的基本原理了，Docker主要就是借助 Linux 内核技术Namespace来做到隔离的，其实包括我后面要说到文件的隔离，资源的隔离都是在新的命名空间下通过<code>mount</code>挂载的方式来隔离的。</p>
-<h2 id="文件的隔离"><a href="#文件的隔离" class="headerlink" title="文件的隔离"></a>文件的隔离</h2><p>了解完进程的隔离，相信你们已经对 Docker 容器的隔离玩法就大概的印象了，我们接下来看看，Docker 内部的文件系统如何隔离，也就是你在 Docker 内部执行 <code>ls</code> 显示的文件夹和文件如何来的。</p>
-<p>我们还是以前面的 Docker 命令为例，执行<code>ls</code></p>
-<pre><code>bin   dev   etc   home  proc  root  run   sys   tmp   usr   var</code></pre><p>我们发现容器内部已经包含了这些文件夹了，那么这些文件夹哪里来的呢？我们先执行<code>docker info</code>来看看我们的 Docker 用到的文件系统是什么？</p>
-<pre><code>Server Version: 1.13.1
-Storage Driver: overlay2</code></pre><p>我的版本是1.13.1，存储驱动是<code>overlay2</code>,不同的存储驱动在 Docker 中表现不一样，但是原理类似，我们来看看 Docker 如何借助<code>overlay2</code>来变出这么多文件夹的。我们前面提到过，Docker都是通过mount 去挂载的,我们先找到我们的容器实例id.</p>
-<p>执行<code>docker ps -a |grep demo_docker</code></p>
-<pre><code>c0afd574aea7        busybox                         &quot;/bin/sh&quot;                42 minutes ago      Up 42 minutes </code></pre><p>我们再根据我们的容器ID 去查找挂载信息，执行<code>cat /proc/mounts | grep c0afd574aea7</code></p>
-<pre><code>shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里出现了一个挂载信息，但是这个记录不是我们的重点，我们需要找到<code>overlay2</code>的挂载信息，所以这里我们还需要执行一个命令:<code>cat /proc/mounts | grep system_u:object_r:container_file_t:s0:c740,c923</code></p>
-<pre><code>overlay /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged overlay rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,relatime,lowerdir=/var/lib/docker/overlay2/l/FWESUOVO6DYTXBBJIQBPUWLN6K:/var/lib/docker/overlay2/l/XPKQU6AMUX3AKLAX2BR6V4JQ3R,upperdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/diff,workdir=/var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/work 0 0
-shm /var/lib/docker/containers/c0afd574aea716593ceb4466943bbd13e3a081bf84da0779ee43600de0df384b/shm tmpfs rw,context=&quot;system_u:object_r:container_file_t:s0:c740,c923&quot;,nosuid,nodev,noexec,relatime,size=65536k 0 0</code></pre><p>这里<code>overlay</code>挂载并没有和容器id关联起来，所以我们直接根据容器id是找不到 <code>overlay</code>挂载信息的，这里借助了<code>context</code> 去关联的，所以我们通过<code>context</code>就找到了我们挂载的地址啦。我们进入目录看看结果</p>
-<pre><code>[root@host1 l]# ls /var/lib/docker/overlay2/9c9318031bc53dfca45b6872b73dab82afcd69f55066440425c073fe681109d3/merged
-bin  dev  etc  home  proc  root  run  sys  tmp  usr  var</code></pre><p>我们发现这个和我们容器的目录是一致的，我们在这个目录下创建一个新的目录，然后看看容器内部是不是会出现新的目录。<br><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/Docker%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E9%9A%94%E7%A6%BB.gif?raw=true" alt="文件系统隔离" title="文件系统隔离"></p>
-<p>上面的图片验证了容器内部的文件内容和挂载的<code>/var/lib/docker/overlay2/ID/merged</code>下是一致的，这就是Docker文件系统隔离的基本原理。</p>
-<h2 id="资源的限制"><a href="#资源的限制" class="headerlink" title="资源的限制"></a>资源的限制</h2><p>玩过 Docker 的同学肯定知道，Docker 还是可以限制资源使用的，比如 CPU 和内存等，那这部分是如何实现的呢？<br>这里就涉及到Linux的另外一个概念<code>Cgroups</code>技术,它是为进程设置资源限制的重要手段，在Linux 中，一切皆文件，所以<code>Cgroups</code>技术也会体现在文件中，我们执行<code>mount -t cgroup</code> 就可以看到<code>Cgroups</code>的挂载情况</p>
-<pre><code>cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd)
-cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,devices)
-cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,net_prio,net_cls)
-cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,hugetlb)
-cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,perf_event)
-cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,freezer)
-cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,blkio)
-cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuacct,cpu)
-cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,pids)
-cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,memory)
-cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,seclabel,cpuset)
-</code></pre><p>我们看到上面挂载的目录有包括 <code>cpu</code>和<code>memory</code> 那我们猜测大概就是在这个文件夹下面配置限制信息的了。我们跑一个容器来验证下，执行命令：</p>
-<pre><code>docker run -d --name=&#39;cpu_set_demo&#39; --cpu-period=100000 --cpu-quota=20000 busybox md5sum /dev/urandom </code></pre><p>这个命令表示我们需要启动一个容器，这个容器一直产生随机数进行md5计算来消耗CPU，<code>--cpu-period=100000 --cpu-quota=20000</code>表示限制 CPU 使用率在20%，关于这两个参数的详细说明可以点击<a href="https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt" target="_blank" rel="noopener">这里</a></p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/cpuset.png?raw=true" alt="进程top" title="进程top"></p>
-<p>我们查看进程消耗情况发现 刚刚启动的容器资源确实被限制在20%，说明 Docker 的CPU限制参数起作用了，那对应在我们的<code>cgroup</code> 文件夹下面是怎么设置的呢？<br>同样，这里的配置肯定是和容器实例id挂钩的，我的文件路径是在<code>/sys/fs/cgroup/cpu/system.slice/docker-5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036.scope</code>下，<code>5bbf589ae223b347c0d10b7e97cd1461ef82149a6d7fb144e8b01fcafecad036</code> 就是我们启动的容器id了。</p>
-<p>切换到上面的文件夹下，查看我们设置的参数：</p>
-<pre><code>[root@host1]# cat cpu.cfs_period_us
-100000
-[root@host1]# cat cpu.cfs_quota_us 
-20000</code></pre><p>发现这里我们的容器启动设置参数一样,也就是说通过这里的文件值来限制容器的cpu使用情况。这里需要注意的是，不同的Linux版本 Docker Cgroup 文件位置可能不一样，有些是在<code>/sys/fs/cgroup/cpu/docker/ID/</code> 下。</p>
-<h2 id="与传统虚拟机技术的区别"><a href="#与传统虚拟机技术的区别" class="headerlink" title="与传统虚拟机技术的区别"></a>与传统虚拟机技术的区别</h2><p>经过前面的进程、文件系统、资源限制分析，详细各位已经对 Docker 的隔离原理有了基本的认识，那么它和传统的虚拟机技术有和区别呢？这里贴一个网上的Docker和虚拟机区别的图</p>
-<p><img src="https://github.com/kinglaw1204/blogImage/blob/master/Docker%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E9%9A%94%E7%A6%BB%E7%9A%84/docker%20%E4%B8%8E%E4%BC%A0%E7%BB%9F%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%8C%BA%E5%88%AB.jpg?raw=true" alt="图片来源极客时间" title="图片来源极客时间"></p>
-<p>这张图应该可以清晰的展示了虚拟机技术和 Docker 技术的区别了，虚拟机技术是完全虚拟出一个单独的系统，有这个系统去处理应用的各种运行请求，所以它实际上对于性能来说是有影响的。而 Docker 技术 完全是依赖 Linux 内核特性 Namespace 和Cgroup 技术来实现的，本质来说：你运行在容器的应用在宿主机来说还是一个普通的进程，还是直接由宿主机来调度的，相对来说，性能的损耗就很少，这也是 Docker 技术的重要优势。</p>
-<p>Docker 技术由于 还是一个普通的进程，所以隔离不是很彻底，还是共用宿主机的内核，在隔离级别和安全性上没有虚拟机高，这也是它的一个劣势。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这篇文章我通过实践来验证了 Docker 容器技术在进程、文件系统、资源限制的隔离原理，最后也比较了虚拟机和 Docker 技术的区别，总的来说 Docker技术由于是一个普通的宿主机进程，所以具有性能优势，而虚拟机由于完全虚拟系统，所以具备了高隔离性和安全性的优势，两者互有优缺点。不过容器化是当下的趋势，相信随着技术的成熟，目前的隔离不彻底的问题也能解决，容器化走天下不是梦。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
-<li><a href="http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf" target="_blank" rel="noopener">http://people.redhat.com/vgoyal/papers-presentations/vault-2017/vivek-overlayfs-and-containers-presentation-valult-2017.pdf</a></li>
-<li><a href="https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/" target="_blank" rel="noopener">https://docs.docker.com/v17.09/engine/userguide/storagedriver/overlayfs-driver/</a></li>
-<li><a href="https://lwn.net/Articles/259217" target="_blank" rel="noopener">https://lwn.net/Articles/259217</a></li>
-</ol>
+<p><strong>不可重复读 VS 幻读</strong></p>
+<p>  <strong>不可重复读的重点是修改</strong> <strong>:</strong><br>  同样的条件 ,  你读取过的数据 ,  再次读取出来发现值不一样了，重点在更新操作。<br>  <strong>幻读的重点在于新增或者删除</strong><br>  同样的条件 ,  第 1 次和第 2 次读出来的记录数不一样，重点在增删操作。</p>
+<p>所以，为了避免上述的问题，事务中就有了隔离级别的概念，在Spring中定义了五种表示隔离级别的常量：</p>
+<table>
+<thead>
+<tr>
+<th>常量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TransactionDefinition.ISOLATION_DEFAULT</td>
+<td>数据库默认的隔离级别，MySQL默认采用的 REPEATABLE_READ隔离级别</td>
+</tr>
+<tr>
+<td>TransactionDefinition.ISOLATION_READ_UNCOMMITTED</td>
+<td>最低的隔离级别，允许读取未提交的数据变更，<strong>可能会导致脏读、幻读或不可重复读</strong>。</td>
+</tr>
+<tr>
+<td>TransactionDefinition.ISOLATION_READ_COMMITTED</td>
+<td>允许读取并发事务已经提交的数据，<strong>可以阻止脏读，但是幻读或不可重复读仍有可能发生</strong>。</td>
+</tr>
+<tr>
+<td>TransactionDefinition.ISOLATION_REPEATABLE_READ</td>
+<td>对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改，<strong>可以阻止脏读和不可重复读，但幻读仍有可能发生。</strong>MySQL中通过MVCC解决了该隔离级别下出现幻读的可能。</td>
+</tr>
+<tr>
+<td>TransactionDefinition.ISOLATION_SERIALIZABLE</td>
+<td>串行化隔离级别，<strong>该级别可以防止脏读、不可重复读以及幻读</strong>，但是串行化会影响性能。</td>
+</tr>
+</tbody></table>
+<h3 id="Spring中事务的传播机制"><a href="#Spring中事务的传播机制" class="headerlink" title="Spring中事务的传播机制"></a>Spring中事务的传播机制</h3><p>为什么Spring中要搞一套事务的传播机制呢？这是Spring给我们提供的事务增强工具，主要是解决方法之间调用，事务如何处理的问题。比如有方法A、方法B和方法C，在A中调用了方法B和方法C。伪代码如下：</p>
+<pre><code>MethodA{
+    MethodB；
+    MethodC;
+}
+MethodB{
+
+}
+MethodC{
+
+}</code></pre><p>假设三个方法中都开启了自己的事务，那么他们之间是什么关系呢？<code>MethodA</code>的回滚会影响<code>MethodB</code>和<code>MethodC</code>吗？Spring中的事务传播机制就是解决这个问题的。</p>
+<p>Spring中定义了七种事务传播行为：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PROPAGATION_REQUIRED</td>
+<td>如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择</td>
+</tr>
+<tr>
+<td>PROPAGATION_SUPPORTS</td>
+<td>支持当前事务，如果当前没有事务，就以非事务方式执行。</td>
+</tr>
+<tr>
+<td>PROPAGATION_MANDATORY</td>
+<td>使用当前的事务，如果当前没有事务，就抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_REQUIRES_NEW</td>
+<td>新建事务，如果当前存在事务，把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NOT_SUPPORTED</td>
+<td>以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NEVER</td>
+<td>以非事务方式执行，如果当前存在事务，则抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NESTED</td>
+<td>如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。</td>
+</tr>
+</tbody></table>
+<p>这七种传播机制是如何影响事务的，感兴趣的同学可以阅读<a href="https://segmentfault.com/a/1190000013341344" target="_blank" rel="noopener">这篇文章</a>。</p>
+<h2 id="如何实现异常回滚的"><a href="#如何实现异常回滚的" class="headerlink" title="如何实现异常回滚的"></a>如何实现异常回滚的</h2><p>回顾完了事务的相关知识，接下来我们正式来研究下Spring Boot中如何通过<code>@Transactional</code>来管理事务的，我们重点看看它是如何实现回滚的。</p>
+<p>在Spring中<code>TransactionInterceptor</code>和<code>PlatformTransactionManager</code>这两个类是整个事务模块的核心，<code>TransactionInterceptor</code>负责拦截方法执行，进行判断是否需要提交或者回滚事务。<code>PlatformTransactionManager</code>是Spring 中的事务管理接口，真正定义了事务如何回滚和提交。我们重点研究下这两个类的源码。</p>
+<p><code>TransactionInterceptor</code>类中的代码有很多，我简化一下逻辑，方便说明：</p>
+<pre><code>    //以下代码省略部分内容
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+    //获取事务调用的目标方法
+        Class&lt;?&gt; targetClass = (invocation.getThis() != null ? AopUtils.getTargetClass(invocation.getThis()) : null);
+    //执行带事务调用
+        return invokeWithinTransaction(invocation.getMethod(), targetClass, invocation::proceed);
+    }
+</code></pre><p>invokeWithinTransaction 简化逻辑如下：</p>
+<pre><code>    //TransactionAspectSupport.class
+    //省略了部分代码
+    protected Object invokeWithinTransaction(Method method, @Nullable Class&lt;?&gt; targetClass,
+            final InvocationCallback invocation) throws Throwable {
+            Object retVal;
+            try {
+            //调用真正的方法体
+                retVal = invocation.proceedWithInvocation();
+            }
+            catch (Throwable ex) {
+                // 如果出现异常，执行事务异常处理
+                completeTransactionAfterThrowing(txInfo, ex);
+                throw ex;
+            }
+            finally {
+            //最后做一下清理工作，主要是缓存和状态等
+                cleanupTransactionInfo(txInfo);
+            }
+            //如果没有异常，直接提交事务。
+            commitTransactionAfterReturning(txInfo);
+            return retVal;
+
+    }</code></pre><p>事务出现异常回滚的逻辑<code>completeTransactionAfterThrowing</code>如下：</p>
+<pre><code>//省略部分代码
+protected void completeTransactionAfterThrowing(@Nullable TransactionInfo txInfo, Throwable ex) {
+                //判断是否需要回滚，判断的逻辑就是看有没有声明事务属性，同时判断是不是在目前的这个异常中执行回滚。
+            if (txInfo.transactionAttribute != null &amp;&amp; txInfo.transactionAttribute.rollbackOn(ex)) {
+                //执行回滚
+                    txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());
+            } 
+            else {
+                        //否则不需要回滚，直接提交即可。
+                    txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());
+
+            }
+        }
+    }</code></pre><p>上面的代码已经把Spring的事务的基本原理说清楚了，如何进行判断执行事务，如何回滚。下面到了真正执行回滚逻辑的代码中<code>PlatformTransactionManager</code>接口的子类，我们以JDBC的事务为例，<code>DataSourceTransactionManager</code>就是jdbc的事务管理类。跟踪上面的代码<code>rollback(txInfo.getTransactionStatus())</code>可以发现最终执行的代码如下：</p>
+<pre><code>@Override
+    protected void doRollback(DefaultTransactionStatus status) {
+        DataSourceTransactionObject txObject = (DataSourceTransactionObject) status.getTransaction();
+        Connection con = txObject.getConnectionHolder().getConnection();
+        if (status.isDebug()) {
+            logger.debug(&quot;Rolling back JDBC transaction on Connection [&quot; + con + &quot;]&quot;);
+        }
+        try {
+        //调用jdbc的 rollback进行回滚事务。
+            con.rollback();
+        }
+        catch (SQLException ex) {
+            throw new TransactionSystemException(&quot;Could not roll back JDBC transaction&quot;, ex);
+        }
+    }</code></pre><h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>这里小结下Spring 中事务的实现思路，Spring 主要依靠 <code>TransactionInterceptor</code> 来拦截执行方法体，判断是否开启事务，然后执行事务方法体，方法体中<code>catch</code>住异常,接着判断是否需要回滚，如果需要回滚就委托真正的<code>TransactionManager</code> 比如JDBC中的<code>DataSourceTransactionManager</code>来执行回滚逻辑。提交事务也是同样的道理。</p>
+<p>这里用个流程图展示下思路：</p>
+<p><img src="https://s1.ax1x.com/2020/03/29/GV0aOx.png" alt="GV0aOx.png"></p>
+<h2 id="手写一个注解实现事务回滚"><a href="#手写一个注解实现事务回滚" class="headerlink" title="手写一个注解实现事务回滚"></a>手写一个注解实现事务回滚</h2><p>我们弄清楚了Spring的事务执行流程，那我们可以模仿着自己写一个注解，实现遇到指定异常就回滚的功能。这里持久层就以最简单的JDBC为例。我们先梳理下需求，首先注解我们可以基于Spring 的AOP来实现，接着既然是JDBC,那么我们需要一个类来帮我们管理连接，用来判断异常是否回滚或者提交。梳理完就开干吧。</p>
+<p><strong>首先加入依赖</strong></p>
+<pre><code>             &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+        &lt;/dependency&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-aop&lt;/artifactId&gt;
+        &lt;/dependency&gt;</code></pre><p><strong>新增一个注解</strong></p>
+<pre><code class="java">/**
+ * @description:
+ * @author: luozhou 
+ * @create: 2020-03-29 17:05
+ **/
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+@Documented
+public @interface MyTransaction {
+    //指定异常回滚
+    Class&lt;? extends Throwable&gt;[] rollbackFor() default {};
+}</code></pre>
+<p><strong>新增连接管理器</strong></p>
+<p>该类帮助我们管理连接，该类的核心功能是把取出的连接对象绑定到线程上，方便在AOP处理中取出，进行提交或者回滚操作。</p>
+<pre><code class="java">/**
+ * @description:
+ * @author: luozhou 
+ * @create: 2020-03-29 21:14
+ **/
+@Component
+public class DataSourceConnectHolder {
+    @Autowired
+    DataSource dataSource;
+    /**
+     * 线程绑定对象
+     */
+    ThreadLocal&lt;Connection&gt; resources = new NamedThreadLocal&lt;&gt;(&quot;Transactional resources&quot;);
+
+    public Connection getConnection() {
+        Connection con = resources.get();
+        if (con != null) {
+            return con;
+        }
+        try {
+            con = dataSource.getConnection();
+            //为了体现事务，全部设置为手动提交事务
+            con.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        resources.set(con);
+        return con;
+    }
+
+    public void cleanHolder() {
+        Connection con = resources.get();
+        if (con != null) {
+            try {
+                con.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        resources.remove();
+    }
+}</code></pre>
+<p><strong>新增一个切面</strong></p>
+<p>这部分是事务处理的核心，先获取注解上的异常类，然后捕获住执行的异常，判断异常是不是注解上的异常或者其子类，如果是就回滚，否则就提交。</p>
+<pre><code class="java">/**
+ * @description:
+ * @author: luozhou 
+ * @create: 2020-03-29 17:08
+ **/
+@Aspect
+@Component
+public class MyTransactionAopHandler {
+    @Autowired
+    DataSourceConnectHolder connectHolder;
+    Class&lt;? extends Throwable&gt;[] es;
+
+    //拦截所有MyTransaction注解的方法
+    @org.aspectj.lang.annotation.Pointcut(&quot;@annotation(luozhou.top.annotion.MyTransaction)&quot;)
+    public void Transaction() {
+
+    }
+
+    @Around(&quot;Transaction()&quot;)
+    public Object TransactionProceed(ProceedingJoinPoint proceed) throws Throwable {
+        Object result = null;
+        Signature signature = proceed.getSignature();
+        MethodSignature methodSignature = (MethodSignature) signature;
+        Method method = methodSignature.getMethod();
+        if (method == null) {
+            return result;
+        }
+        MyTransaction transaction = method.getAnnotation(MyTransaction.class);
+        if (transaction != null) {
+            es = transaction.rollbackFor();
+        }
+        try {
+            result = proceed.proceed();
+        } catch (Throwable throwable) {
+            //异常处理
+            completeTransactionAfterThrowing(throwable);
+            throw throwable;
+        }
+        //直接提交
+        doCommit();
+        return result;
+    }
+        /**
+        * 执行回滚，最后关闭连接和清理线程绑定
+        */
+    private void doRollBack() {
+        try {
+            connectHolder.getConnection().rollback();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            connectHolder.cleanHolder();
+        }
+
+    }
+        /**
+        *执行提交，最后关闭连接和清理线程绑定
+        */
+    private void doCommit() {
+        try {
+            connectHolder.getConnection().commit();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            connectHolder.cleanHolder();
+        }
+    }
+        /**
+        *异常处理，捕获的异常是目标异常或者其子类，就进行回滚，否则就提交事务。
+        */
+    private void completeTransactionAfterThrowing(Throwable throwable) {
+        if (es != null &amp;&amp; es.length &gt; 0) {
+            for (Class&lt;? extends Throwable&gt; e : es) {
+                if (e.isAssignableFrom(throwable.getClass())) {
+                    doRollBack();
+                }
+            }
+        }
+        doCommit();
+    }
+}</code></pre>
+<p><strong>测试验证</strong></p>
+<p>创建一个tb_test表，表结构如下：</p>
+<pre><code class="sql">SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for tb_test
+-- ----------------------------
+DROP TABLE IF EXISTS `tb_test`;
+CREATE TABLE `tb_test` (
+  `id` int(11) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+SET FOREIGN_KEY_CHECKS = 1;</code></pre>
+<p>编写一个Service，<code>saveTest</code>方法调用了2个插入语句，同时声明了<code>@MyTransaction</code>事务注解，遇到<code>NullPointerException</code>就进行回滚，最后我们执行了除以0操作，会抛出<code>ArithmeticException</code>。我们用单元测试看看数据是否会回滚。</p>
+<pre><code class="Java">/**
+ * @description:
+ * @author: luozhou kinglaw1204@gmail.com
+ * @create: 2020-03-29 22:05
+ **/
+@Service
+public class MyTransactionTest implements TestService {
+    @Autowired
+    DataSourceConnectHolder holder;
+        //一个事务中执行两个sql插入
+   @MyTransaction(rollbackFor = NullPointerException.class)
+    @Override
+    public void saveTest(int id) {
+        saveWitharamters(id, &quot;luozhou@gmail.com&quot;);
+        saveWitharamters(id + 10, &quot;luozhou@gmail.com&quot;);
+        int aa = id / 0;
+    }
+        //执行sql
+   private void saveWitharamters(int id, String email) {
+        String sql = &quot;insert into tb_test values(?,?)&quot;;
+        Connection connection = holder.getConnection();
+        PreparedStatement stmt = null;
+        try {
+            stmt = connection.prepareStatement(sql);
+            stmt.setInt(1, id);
+            stmt.setString(2, email);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+}</code></pre>
+<p>单元测试</p>
+<pre><code class="java">@SpringBootTest
+@RunWith(SpringRunner.class)
+class SpringTransactionApplicationTests {
+    @Autowired
+    private TestService service;
+
+    @Test
+    void contextLoads() throws SQLException {
+        service.saveTest(1);
+    }
+
+}</code></pre>
+<p><img src="https://oscimg.oschina.net/oscnet/up-dbd04bcead04db61095a10ccb95b9708435.gif" alt=""></p>
+<p>上图代码声明了事务对<code>NullPointerException</code>异常进行回滚，运行中遇到了<code>ArithmeticException</code>异常，所以是不会回滚的，我们在右边的数据库中刷新发现数据正常插入成功了，说明并没有回滚。</p>
+<p><img src="https://oscimg.oschina.net/oscnet/up-d53fcc045c4e87ea4317409245aa9b6b54a.gif" alt=""></p>
+<p>我们把回滚的异常类改为<code>ArithmeticException</code>,把原数据清空再执行一次，出现了<code>ArithmeticException</code>异常，这个时候查看数据库是没有记录新增成功了，这说明事物进行回滚了，表明我们的注解起作用了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文最开始回顾了事务的相关知识，并发事务会导致<strong>脏读</strong>、<strong>丢失修改</strong>、<strong>不可重复读</strong>、<strong>幻读</strong>，为了解决这些问题，数据库中就引入了事务的隔离级别，隔离级别包括：<strong>读未提交</strong>、<strong>读提交</strong>、<strong>可重复读</strong>和<strong>串行化</strong>。</p>
+<p>Spring中增强了事务的概念，为了解决方法A、方法B和方法C之间的事务关系，引入了事务传播机制的概念。</p>
+<p>Spring中的<code>@Transactional</code>注解的事务实现主要通过<code>TransactionInterceptor</code>拦截器来进行实现的，拦截目标方法，然后判断异常是不是目标异常，如果是目标异常就行进行回滚，否则就进行事务提交。</p>
+<p>最后我们自己通过JDBC结合Spring的AOP自己写了个<code>@MyTransactional</code>的注解，实现了遇到指定异常回滚的功能。</p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
@@ -650,12 +912,12 @@ cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,sec
 
 
 <div class="article_copyright">
-    <p><span class="copy-title">文章标题:</span>Docker是如何实现隔离的</p>
-    <p><span class="copy-title">文章字数:</span><span class="post-count">3k</span></p>
+    <p><span class="copy-title">文章标题:</span>Spring Boot中的事务是如何实现的</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">3.2k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
-    <p><span class="copy-title">发布时间:</span>2020-01-21, 09:36:51</p>
-    <p><span class="copy-title">最后更新:</span>2020-02-29, 21:07:05</p>
-    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/01/21/docker-islotion/" title="Docker是如何实现隔离的">http://luozhou.top/2020/01/21/docker-islotion/</a>
+    <p><span class="copy-title">发布时间:</span>2020-03-28, 14:50:37</p>
+    <p><span class="copy-title">最后更新:</span>2020-03-31, 10:43:41</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/03/28/spring-boot-transaction/" title="Spring Boot中的事务是如何实现的">http://luozhou.top/2020/03/28/spring-boot-transaction/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
     </p>
