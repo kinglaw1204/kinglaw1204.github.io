@@ -6,19 +6,36 @@
   <meta name="keywords" content=" Java , Jvm ">
   <meta name="description" content="你写的Java对象究竟占多少内存？ | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta name="description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta name="description" content="概述性能优化一向是后端服务优化的重点，但是线上性能故障问题不是经常出现，或者受限于业务产品，根本就没办法出现性能问题，包括笔者自己遇到的性能问题也不多，所以为了提前储备知识，当出现问题的时候不会手忙脚乱，我们本篇文章来模拟下常见的几个Java性能故障，来学习怎么去分析和定位。 预备知识既然是定位问题，肯定是需要借助工具，我们先了解下需要哪些工具可以帮忙定位问题。  top命令  top命令使我们">
 <meta property="og:type" content="article">
-<meta property="og:title" content="西藏旅游⊙准备篇">
-<meta property="og:url" content="http://luozhou.top/2020/02/29/Tibet-Travel-Guide/index.html">
+<meta property="og:title" content="手把手教你定位常见Java性能问题">
+<meta property="og:url" content="http://luozhou.top/2020/04/25/analysis-java-perfomance/index.html">
 <meta property="og:site_name" content="匠人的小屋">
-<meta property="og:description" content="前记也有很多小伙伴们，希冀着未来一天，也能踏上去西藏的路。那么问题也就接踵而至，应该准备些什么呢？选择怎么样的交通工具呢？是不是真的很容易高反？是不是提前吃红景天各种什么药物呢？是不是真的很容易晒黑呢？等等等一系列问题。 身体准备篇 首先，沿途的风景很美，放轻松，没有必要谈反色变，当然也需要提前调整一下。 例如有规律锻炼习惯的朋友，尤其是喜欢长跑的，做有氧运动，建议提前停半年，再去愉快的旅行。粥哥">
+<meta property="og:description" content="概述性能优化一向是后端服务优化的重点，但是线上性能故障问题不是经常出现，或者受限于业务产品，根本就没办法出现性能问题，包括笔者自己遇到的性能问题也不多，所以为了提前储备知识，当出现问题的时候不会手忙脚乱，我们本篇文章来模拟下常见的几个Java性能故障，来学习怎么去分析和定位。 预备知识既然是定位问题，肯定是需要借助工具，我们先了解下需要哪些工具可以帮忙定位问题。  top命令  top命令使我们">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-02-29T12:55:33.000Z">
-<meta property="article:modified_time" content="2020-02-29T13:19:42.462Z">
+<meta property="og:image" content="https://cdn.pixabay.com/photo/2020/03/10/16/47/moon-4919501_1280.jpg">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshPzQ.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JsheoV.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshFMj.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/Jshkss.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshALn.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshCRg.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshZd0.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshniT.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshPzQ.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JsheoV.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshFMj.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/Jshkss.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshALn.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshCRg.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshZd0.png">
+<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshniT.png">
+<meta property="article:published_time" content="2020-04-25T06:19:01.000Z">
+<meta property="article:modified_time" content="2020-04-25T07:25:03.697Z">
 <meta property="article:author" content="木木匠">
-<meta property="article:tag" content="西藏">
-<meta property="article:tag" content="攻略">
+<meta property="article:tag" content="java">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.pixabay.com/photo/2020/03/10/16/47/moon-4919501_1280.jpg">
 
 
 <link rel="icon" href="/img/avatar.jpg">
