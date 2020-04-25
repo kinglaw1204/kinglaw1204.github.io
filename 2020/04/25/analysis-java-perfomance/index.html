@@ -23,7 +23,7 @@
 <meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshZd0.png">
 <meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshniT.png">
 <meta property="article:published_time" content="2020-04-25T06:19:01.000Z">
-<meta property="article:modified_time" content="2020-04-25T13:05:48.156Z">
+<meta property="article:modified_time" content="2020-04-25T14:10:03.523Z">
 <meta property="article:author" content="木木匠">
 <meta property="article:tag" content="java">
 <meta name="twitter:card" content="summary">
@@ -492,7 +492,7 @@
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-04-25 21:05:48'>2020-04-25 14:19</time>
+        创建时间:<time class="date" title='更新时间: 2020-04-25 22:10:03'>2020-04-25 14:19</time>
         
     </div>
     <div class="article-meta">
@@ -772,10 +772,10 @@ public class ThreadSwap1 implements Runnable {
 100  0 128000 878384    908 468684    0    0     0     0 4083 8410174 14 86  0  0  0
 100  0 128000 878384    908 468684    0    0     0     0 4083 8264377 14 86  0  0  0
 100  0 128000 878384    908 468688    0    0     0   108 4182 8346826 14 86  0  0  0</code></pre><p>这里我们关注4个指标，<code>r</code>,<code>cs</code>,<code>us</code>,<code>sy</code>。</p>
-<p>r=100,说明等待的进程数量是100，线程有阻塞。</p>
-<p>cs=800多万，说明每秒线程切换了800多万次，这个数字相当大了，明显出现了太多的线程切换。</p>
-<p>us=14，说明用户态占用了14%的CPU时间片去处理逻辑。</p>
-<p>sy=86，说明内核态占用了86%的CPU，这里明显就是做上下文切换工作了。</p>
+<p><strong>r=100</strong>,说明等待的进程数量是100，线程有阻塞。</p>
+<p><strong>cs=800多万</strong>，说明每秒线程切换了800多万次，这个数字相当大了，明显出现了太多的线程切换。</p>
+<p><strong>us=14</strong>，说明用户态占用了14%的CPU时间片去处理逻辑。</p>
+<p><strong>sy=86</strong>，说明内核态占用了86%的CPU，这里明显就是做上下文切换工作了。</p>
 <p>我们通过<code>top</code>命令以及<code>top -Hp pid</code>查看进程和线程CPU情况，发现Java线程CPU占满了，但是线程CPU使用情况很平均，没有某一个线程把CPU吃满的情况。</p>
 <pre><code>PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                                                                            
  87093 root      20   0 4194788 299056  13252 S 399.7 16.1  65:34.67 java </code></pre><pre><code> PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND                                                                             
@@ -799,7 +799,7 @@ public class ThreadSwap1 implements Runnable {
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文模拟了常见的性能问题场景，分析了如何定位CPU100%、内存泄漏、死锁、线程频繁切换问题。分析问题我们需要做好两件事，第一，掌握基本的原理，第二，借助好工具。本文也列举了分析问题的常用工具和命令，希望对你解决问题有所帮助。当然真正的线上环境可能十分复杂，并没有模拟的环境那么简单，但是原理是一样的，问题的表现也是类似的，我们重点抓住原理，活学活用，相信复杂的线上问题也可以顺利解决。</p>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>1、<a href="https://linux.die.net/man/1/pidstat" target="_blank" rel="noopener">https://linux.die.net/man/1/pidstat</a></p>
 <p>2、<a href="https://linux.die.net/man/8/vmstat" target="_blank" rel="noopener">https://linux.die.net/man/8/vmstat</a></p>
-<p>3、<a href="https://help.eclipse.org/2020-03/index.jsp?topic=/org.eclipse.mat.ui.help/welcome.html" target="_blank" rel="noopener">https://help.eclipse.org/2020-03/index.jsp?topic=/org.eclipse.mat.ui.help/welcome.html</a>)</p>
+<p>3、<a href="https://help.eclipse.org/2020-03/index.jsp?topic=/org.eclipse.mat.ui.help/welcome.html" target="_blank" rel="noopener">https://help.eclipse.org/2020-03/index.jsp?topic=/org.eclipse.mat.ui.help/welcome.html</a></p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
@@ -817,7 +817,7 @@ public class ThreadSwap1 implements Runnable {
     <p><span class="copy-title">文章字数:</span><span class="post-count">4k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
     <p><span class="copy-title">发布时间:</span>2020-04-25, 14:19:01</p>
-    <p><span class="copy-title">最后更新:</span>2020-04-25, 21:05:48</p>
+    <p><span class="copy-title">最后更新:</span>2020-04-25, 22:10:03</p>
     <span class="copy-title">原始链接:</span><a class="post-url" href="/2020/04/25/analysis-java-perfomance/" title="手把手教你定位常见Java性能问题">http://luozhou.top/2020/04/25/analysis-java-perfomance/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
