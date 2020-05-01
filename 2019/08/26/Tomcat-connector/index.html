@@ -6,28 +6,18 @@
   <meta name="keywords" content=" Tomcat ">
   <meta name="description" content="Tomcat中的连接器是如何设计的 | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta name="description" content="概述性能优化一向是后端服务优化的重点，但是线上性能故障问题不是经常出现，或者受限于业务产品，根本就没办法出现性能问题，包括笔者自己遇到的性能问题也不多，所以为了提前储备知识，当出现问题的时候不会手忙脚乱，我们本篇文章来模拟下常见的几个Java性能故障，来学习怎么去分析和定位。 预备知识既然是定位问题，肯定是需要借助工具，我们先了解下需要哪些工具可以帮忙定位问题。  top命令  top命令使我们">
+<meta name="description" content="前两天，公司部门举行了一场OKR会议，会议的过程中举行了一个游戏环节，游戏的过程和结果很有意思，也带给我一些思考，这里分享给大家。 这个游戏的名字叫“数字传递游戏”，规则就是分出至少两组，每组10个人左右，分别排成一队，裁判给每组最后一个人一个100以内的数字，然后最后一个人通过在前一个人的背部做动作，可以是拍，打，画等，但是不允许说话，将数字传递给前面一个人，直到传递给队伍第一个人，由第一个人说">
 <meta property="og:type" content="article">
-<meta property="og:title" content="手把手教你定位常见Java性能问题">
-<meta property="og:url" content="http://luozhou.top/2020/04/25/analysis-java-perfomance/index.html">
+<meta property="og:title" content="一场游戏的思考">
+<meta property="og:url" content="http://luozhou.top/2020/04/30/Thinking-of-playing-game/index.html">
 <meta property="og:site_name" content="匠人的小屋">
-<meta property="og:description" content="概述性能优化一向是后端服务优化的重点，但是线上性能故障问题不是经常出现，或者受限于业务产品，根本就没办法出现性能问题，包括笔者自己遇到的性能问题也不多，所以为了提前储备知识，当出现问题的时候不会手忙脚乱，我们本篇文章来模拟下常见的几个Java性能故障，来学习怎么去分析和定位。 预备知识既然是定位问题，肯定是需要借助工具，我们先了解下需要哪些工具可以帮忙定位问题。  top命令  top命令使我们">
+<meta property="og:description" content="前两天，公司部门举行了一场OKR会议，会议的过程中举行了一个游戏环节，游戏的过程和结果很有意思，也带给我一些思考，这里分享给大家。 这个游戏的名字叫“数字传递游戏”，规则就是分出至少两组，每组10个人左右，分别排成一队，裁判给每组最后一个人一个100以内的数字，然后最后一个人通过在前一个人的背部做动作，可以是拍，打，画等，但是不允许说话，将数字传递给前面一个人，直到传递给队伍第一个人，由第一个人说">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://cdn.pixabay.com/photo/2020/03/10/16/47/moon-4919501_1280.jpg">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshPzQ.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JsheoV.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshFMj.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/Jshkss.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshALn.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshCRg.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshZd0.png">
-<meta property="og:image" content="https://s1.ax1x.com/2020/04/25/JshniT.png">
-<meta property="article:published_time" content="2020-04-25T06:19:01.000Z">
-<meta property="article:modified_time" content="2020-04-26T02:53:31.039Z">
+<meta property="article:published_time" content="2020-04-30T14:09:06.000Z">
+<meta property="article:modified_time" content="2020-05-01T13:24:17.233Z">
 <meta property="article:author" content="木木匠">
-<meta property="article:tag" content="java">
+<meta property="article:tag" content="思考与感想">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cdn.pixabay.com/photo/2020/03/10/16/47/moon-4919501_1280.jpg">
 
 
 <link rel="icon" href="/img/avatar.jpg">
