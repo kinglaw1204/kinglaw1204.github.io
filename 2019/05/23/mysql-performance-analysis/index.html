@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>对于MySQL你必须要了解的锁知识 | 匠人的小屋</title>
-  <meta name="keywords" content=" mysql ">
-  <meta name="description" content="对于MySQL你必须要了解的锁知识 | 匠人的小屋">
+  <title>从原理上理解MySQL的优化建议 | 匠人的小屋</title>
+  <meta name="keywords" content=" mysql , 性能优化 ">
+  <meta name="description" content="从原理上理解MySQL的优化建议 | 匠人的小屋">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="前两天，公司部门举行了一场OKR会议，会议的过程中举行了一个游戏环节，游戏的过程和结果很有意思，也带给我一些思考，这里分享给大家。 这个游戏的名字叫“数字传递游戏”，规则就是分出至少两组，每组10个人左右，分别排成一队，裁判给每组最后一个人一个100以内的数字，然后最后一个人通过在前一个人的背部做动作，可以是拍，打，画等，但是不允许说话，将数字传递给前面一个人，直到传递给队伍第一个人，由第一个人说">
 <meta property="og:type" content="article">
@@ -490,9 +490,9 @@
 </aside>
 <div class="post">
     <div class="pjax">
-        <article id="post-mysql-lock" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-mysql-performance-analysis" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">对于MySQL你必须要了解的锁知识</h1>
+        <h1 class="article-title">从原理上理解MySQL的优化建议</h1>
     
     <div class="article-meta">
         
@@ -511,17 +511,19 @@
             
             <a class="color1">mysql</a>
             
+            <a class="color5">性能优化</a>
+            
         </span>
         
     </div>
     <div class="article-meta">
         
-        创建时间:<time class="date" title='更新时间: 2020-03-01 10:45:21'>2019-04-15 10:44</time>
+        创建时间:<time class="date" title='更新时间: 2020-05-24 21:17:39'>2019-05-23 10:44</time>
         
     </div>
     <div class="article-meta">
         
-        <span>字数:2.1k</span>
+        <span>字数:2.8k</span>
         
         
         <span id="busuanzi_container_page_pv">
@@ -551,7 +553,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#一、前言"><span class="toc-text">一、前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二、全局锁"><span class="toc-text">二、全局锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三、表锁"><span class="toc-text">三、表锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四、行锁-InnoDB"><span class="toc-text">四、行锁(InnoDB)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-共享锁"><span class="toc-text">4.1 共享锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-排它锁"><span class="toc-text">4.2 排它锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-意向锁"><span class="toc-text">4.3 意向锁</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#预备知识"><span class="toc-text">预备知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#B-树索引"><span class="toc-text">B+ 树索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Explain-执行计划"><span class="toc-text">Explain 执行计划</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么建议使用自增主键"><span class="toc-text">为什么建议使用自增主键</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#null"><span class="toc-text"></span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么不要使用-select-查询"><span class="toc-text">为什么不要使用 select * 查询</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-text">参考</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -567,107 +569,201 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="一、前言"><a href="#一、前言" class="headerlink" title="一、前言"></a>一、前言</h2><p>MySQL 的锁按照范围可以分为全局锁、表锁、行锁，其中行锁是由数据库引擎实现的，并不是所有的引擎都提供行锁，MyISAM 就不支持行锁，所以文章介绍行锁会以InnoDB引擎为例来介绍行锁。</p>
-<h2 id="二、全局锁"><a href="#二、全局锁" class="headerlink" title="二、全局锁"></a>二、全局锁</h2><p>MySQL 提供全局锁来对整个数据库实例加锁。</p>
-<p>语法：</p>
-<pre><code>FLUSH TABLES WITH READ LOCK</code></pre><p>这条语句一般都是用来备份的，当执行这条语句后，数据库所有打开的表都会被关闭，并且使用全局读锁锁定数据库的所有表，同时，其他线程的更新语句（增删改），数据定义语句（建表，修改表结构）和更新类的事务提交都会被阻塞。</p>
-<p>在mysql 8.0 以后，对于备份，mysql可以直接使用备份锁。</p>
-<p>语句：</p>
-<pre><code>LOCK INSTANCE FOR BACKUP
-
-UNLOCK INSTANCE</code></pre><p>这个锁的作用范围更广，这个锁会阻止文件的创建，重命名，删除，包括 <code>REPAIR TABLE TRUNCATE TABLE, OPTIMIZE TABLE</code>操作以及账户的管理都会被阻塞。当然这些操作对于内存临时表来说是可以执行的，为什么内存表不受这些限制呢？因为内存表不需要备份，所以也就没必要满足这些条件。</p>
-<h2 id="三、表锁"><a href="#三、表锁" class="headerlink" title="三、表锁"></a>三、表锁</h2><p>Mysql的表级别锁分为两类，一类是元数据锁（Metadata Lock，MDL），一种是表锁。</p>
-<p><strong>元数据锁(MDL)</strong> 不需要显式使用，在访问一个表的时候会被自动加上。这个特性需要MySQL5.5版本以上才会支持，当对一个表做增删改查的时候，该表会被加MDL读锁；当对表做结构变更的时候，加MDL写锁。MDL锁有一些规则：</p>
+        <p><img src="https://cdn.pixabay.com/photo/2020/05/17/13/57/polar-bear-5181724_1280.jpg" alt="title"></p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>自从学习 MySQL 以来，我们一直听到或者看到很多优化建议，比如说不要用 select * 查询，用什么字段就查什么字段；建议用自增主键来作为表的主键，等等。这些建议听得很多感觉都成了 MySQL 开发的常识了，但是对于这些优化建议，我们有没有想过为什么要这么做呢？这篇博文我们从 MySQL 的原理出发，来解释下为什么有这些优化建议？</p>
+<blockquote>
+<p>本文实验环境 MySQL  5.7.25</p>
+</blockquote>
+<h2 id="预备知识"><a href="#预备知识" class="headerlink" title="预备知识"></a>预备知识</h2><h3 id="B-树索引"><a href="#B-树索引" class="headerlink" title="B+ 树索引"></a>B+ 树索引</h3><p>MySQL 的默认存储引擎 InnoDB 使用 B+ 树来存储数据的，所以在分析优化建议之前，我们有必要了解 B+ 树索引的基本原理。</p>
+<p><img src="https://s1.ax1x.com/2020/05/23/YxQhQg.md.png" alt="B+树索引示意图"></p>
+<p>上图是一个 B + 树索引示意图（<a href="https://baike.baidu.com/item/B%2B%E6%A0%91" target="_blank" rel="noopener">B+ 树的定义可以看这里</a>），每个节点表示一个磁盘块，也可以理解为数据库中的页。我们来分析下 B+ 树索引的查找过程，如果我要查询主键为 35 的数据，索引会怎么走呢？首先会判断 35 小于根节点 37 ，继续查询左子树，判断 35 大于 22 和 33 那么进入其右子树，找到了叶子节点 33 ，继续遍历找到了 35 ，最后取出其 data 即可。在索引的情况下，查询 35 只用了3次 IO 操作，这是非常高效的。在真实的场景下，3层的b+树可以表示上百万的数据，如果上百万的数据查找只需要三次IO，性能提高将是巨大的，如果没有索引，每个数据项都要发生一次IO，那么总共需要百万次的IO，显然成本非常非常高。上图中也是体现了只要维持树的高度足够低，IO 操作就会足够少，IO次数少，查询性能就会高。</p>
+<h3 id="Explain-执行计划"><a href="#Explain-执行计划" class="headerlink" title="Explain 执行计划"></a>Explain 执行计划</h3><p><img src="https://s1.ax1x.com/2020/05/23/YxQoes.md.png" alt="执行计划"></p>
+<p>上图就是一个 explian 执行计划，先看看上面各个字段的含义是什么？</p>
 <ul>
-<li>读锁之间不互斥，所以可以多线程多同一张表进行增删改查。</li>
-<li>读写锁、写锁之间是互斥的，为了保证表结构变更的安全性，所以如果要多线程对同一个表加字段等表结构操作，就会变成串行化，需要进行锁等待。</li>
-<li>MDL的写锁优先级比MDL读锁的优先级，但是可以设置max_write_lock_count系统变量来改变这种情况，当写锁请求超过这个变量设置的数后，MDL读锁的优先级会比MDL写锁的优先级高。（默认情况下，这个数字会很大，所以不用担心写锁的优先级下降）</li>
-<li>MDL的锁释放必须要等到事务结束才会释放</li>
-</ul>
-<p>所以我们在操作数据库表结构时候必须要注意不要使用长事务，这里具体是什么意思呢？我举个例子说明下：</p>
-<p><img src="!%5B%5D(https://user-gold-cdn.xitu.io/2019/4/13/16a15bcad254b77d?w=602&amp;h=553&amp;f=png&amp;s=16968" alt=""></p>
-<p>上图表示演示了4个session执行语句，首先SessionA开启了事务没有提交，接着sessionB执行查询，因为是获取MDL读锁，所以互相不影响，可以正常执行，SessionC新增一个字段，由于MDL写和读是互斥的，所以SessionC会被阻塞，之后SessionD开始执行一个查询语句，由于SessionC的阻塞，所以SessionD也阻塞了。所以，我们模拟的SessionA的事务是长事务，然后后面执行了修改表结构，会导致后续对该表所有的读写操作都不可行了。所以在实际场景中，如果业务请求比较频繁的时候，对表结构进行修改的时候就有可能导致该库的线程被阻塞满。</p>
-<p><strong>表锁</strong> 的语法如下：</p>
-<pre><code>LOCK TABLES
-    tbl_name [[AS] alias] lock_type
-    [, tbl_name [[AS] alias] lock_type] ...
-
-lock_type: {
-    READ [LOCAL]
-  | [LOW_PRIORITY] WRITE
-}
-
-UNLOCK TABLES</code></pre><p><strong>表锁分为读锁和写锁</strong>，读锁不互斥，但是获取读锁不能写入数据,其他没有获取到读锁的session也是可以读取表的，所以读锁的目的就是限制表被写。如果表被读锁锁住后，再执行插入语句会报错，报错如下：</p>
-<pre><code>1099 - Table &#39;XXXX&#39; was locked with a READ lock and can&#39;t be updated</code></pre><p><strong>写锁</strong>被获取后可以对表进行读写，写锁是互斥的，一旦某个session获取到表的写锁，另外的session无法访问这个表，直到写锁被释放。</p>
-<p>表的解锁可以使用<code>unlock tables</code>解锁，也可以客户端口自动解锁。<code>lock tables</code>锁表会独占式的锁住表，除了限制其他线程对该表的读写，也会限制本线程接下来的操作对象。</p>
-<h2 id="四、行锁-InnoDB"><a href="#四、行锁-InnoDB" class="headerlink" title="四、行锁(InnoDB)"></a>四、行锁(InnoDB)</h2><p>MySQL的行锁是在引擎层面实现的，所以这里讨论的也是InnoDB引擎下的行锁，下面会详细介绍InnoDB下常见的几种行锁</p>
-<h3 id="4-1-共享锁"><a href="#4-1-共享锁" class="headerlink" title="4.1 共享锁"></a>4.1 共享锁</h3><p>共享锁能允许事务获取到锁后进行读操作，共享锁是不互斥的，一个事务获取到共享锁后，另外一个事务也可以获取共享锁，获取共享锁后不能进行写操作。</p>
-<h3 id="4-2-排它锁"><a href="#4-2-排它锁" class="headerlink" title="4.2 排它锁"></a>4.2 排它锁</h3><p>排他锁允许事务获取到锁后进行更新一行或者删除某一行操作，排他锁顾名思义是互斥的，一个事务获取到排他锁后，其他事务不能获取到排他锁，直到这个锁被释放。</p>
-<h3 id="4-3-意向锁"><a href="#4-3-意向锁" class="headerlink" title="4.3 意向锁"></a>4.3 意向锁</h3><p>InnoDB支持多种粒度的锁，允许行锁和表锁共存，这里说的<strong>意向锁其实是一种表级别的锁</strong>，但是我把它放在行锁里面是因为它不会单独存在，它的出现肯定会伴随着行锁（共享锁或者排他锁），它主要的目的就是表示将要锁定表中的行或者正在锁定表中的行。</p>
-<p>意向锁根据和行锁的组合可以分为：</p>
-<ul>
-<li><p>意向排他锁：表明将要在表中的某些行获取排他锁</p>
+<li><p><strong>id:</strong> Query Optimizer 所选定的执行计划中的查询编号。</p>
 </li>
-<li><p>意向共享锁：表明将要在表中的某些行获取共享锁</p>
-</li>
-</ul>
-<p>意向锁的获取必须在行锁获取之前，也就是说获取共享锁之前必须先要获取共享意向锁，对于排他锁也是一样的道理。</p>
-<p><strong>那么这个意向锁到底有什么作用呢？</strong></p>
-<p>解释这个之前，我们先看看意向锁和行锁之前的兼容关系：</p>
+<li><p><strong>select_type:</strong> 所使用的查询类型，主要有几种查询类型：</p>
 <table>
 <thead>
 <tr>
-<th>—</th>
-<th>排他锁（X）</th>
-<th>意向排他锁（IX)</th>
-<th>共享锁(S)</th>
-<th>意向共享锁(IS)</th>
+<th align="center">类型名称</th>
+<th align="left">说明</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>排他锁(X）</td>
-<td>冲突</td>
-<td>冲突</td>
-<td>冲突</td>
-<td>冲突</td>
+<td align="center">SIMPLE</td>
+<td align="left">除子查询或者UNION查询之外的其他查询。</td>
 </tr>
 <tr>
-<td>意向排他锁（IX)</td>
-<td>冲突</td>
-<td>兼容</td>
-<td>冲突</td>
-<td>兼容</td>
+<td align="center">PRIMARY</td>
+<td align="left">子查询中的最外层查询，<strong>注意并不是主键查询</strong>。</td>
 </tr>
 <tr>
-<td>共享锁(S)</td>
-<td>冲突</td>
-<td>冲突</td>
-<td>兼容</td>
-<td>兼容</td>
+<td align="center">UNION</td>
+<td align="left">UNION语句中第二个 SELECT 开始的后面所有 SELECT，第一个 SELECT 为 PRIMARY。</td>
 </tr>
 <tr>
-<td>意向共享锁(IS)</td>
-<td>冲突</td>
-<td>兼容</td>
-<td>兼容</td>
-<td>兼容</td>
+<td align="center">DEPENDENT UNION</td>
+<td align="left">子查询中的 UNION，且为 UNION 中从第二个 SELECT 开始的后面所有 SELECT ，同样依赖于外部查询的结果集。</td>
+</tr>
+<tr>
+<td align="center">UNION RESULT</td>
+<td align="left">UNION 中的合并结果。</td>
+</tr>
+<tr>
+<td align="center">SUBQUERY</td>
+<td align="left">子查询内层查询的第一个 SELECT，结果不依赖于外部查询结果集 。</td>
+</tr>
+<tr>
+<td align="center">DEPENDENT SUBQUERY</td>
+<td align="left">子查询内层查询的第一个 SELECT，结果依赖于外部查询结果集。</td>
+</tr>
+<tr>
+<td align="center">DERIVED</td>
+<td align="left">驱动表，就是主表</td>
+</tr>
+<tr>
+<td align="center">MATERIALIZED</td>
+<td align="left">子查询的结果被保存为虚拟临时表</td>
+</tr>
+<tr>
+<td align="center">UNCACHEABLE SUBQUERY</td>
+<td align="left">结果集无法缓存的子查询</td>
+</tr>
+<tr>
+<td align="center">UNCACHEABLE UNION</td>
+<td align="left">结果集无法缓存的 UNION 查询</td>
 </tr>
 </tbody></table>
-<p>我们假设有2个事务A和事务B，事务获取到了共享锁，锁住了表中的某一行，这一行只能读，不能写，现在事务B要申请整个表的写锁。如果事务B申请成功，那么肯定是可以对表中所有的行进行写操作的，那么肯定与A获取的行锁冲突。数据库为了避免这种冲突，就会进行冲突检测，那么如何去检测呢？有两种方式：</p>
+</li>
+</ul>
 <ul>
-<li>判断表是否已经被其他事务用表级锁锁住。</li>
-<li>判断表中的每一行是否被行锁锁住。</li>
+<li><p><strong>table:</strong>  显示执行这一步所访问的数据库中的表的名称。</p>
+</li>
+<li><p><strong>partitions:</strong> 查询分区表匹配的分区，非分区表显示 NULL 。</p>
+</li>
+<li><p><strong>type:</strong> 查询表所使用的方式，类型如下：</p>
+<table>
+<thead>
+<tr>
+<th>类型名称</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>all</td>
+<td>全表扫描。</td>
+</tr>
+<tr>
+<td>const</td>
+<td>读常量，最多只有一条记录匹配，由于是常量，所以实际上只要读一次。</td>
+</tr>
+<tr>
+<td>system</td>
+<td>系统表，表中只有一条数据，它是特殊的 const 类型。</td>
+</tr>
+<tr>
+<td>eq_ref</td>
+<td>最多只会匹配一条结果，一般是通过主键或者唯一索引来访问。</td>
+</tr>
+<tr>
+<td>ref</td>
+<td>Join 语句中被驱动表的索引查询</td>
+</tr>
+<tr>
+<td>full_text</td>
+<td>使用 full_text 索引</td>
+</tr>
+<tr>
+<td>ref_or_null</td>
+<td>与ref唯一的区别就是在使用索引查询之外再增加一个空值查询。</td>
+</tr>
+<tr>
+<td>index_merge</td>
+<td>查询中同时使用两个（或者多个）索引，然后对索引结果进行merge之后再读表数据。</td>
+</tr>
+<tr>
+<td>unique_subquery</td>
+<td>子查询中的返回结果字段组合是主键或者唯一索引</td>
+</tr>
+<tr>
+<td>index_subquery</td>
+<td>子查询中的返回结果字段组合是索引，但是不是主键或者唯一索引</td>
+</tr>
+<tr>
+<td>range</td>
+<td>索引范围扫描，经常出现在比较条件中 ,如：&lt;, &gt; ,BETWEEN 等</td>
+</tr>
+<tr>
+<td>Index</td>
+<td>全索引扫描</td>
+</tr>
+</tbody></table>
+<p>他们的性能由好到差依次是：<strong>system &gt; const &gt; eq_ref &gt; ref &gt; full_text &gt; ref_or_null &gt; unique_subquery &gt; index_subquery &gt; range &gt;  index_merge &gt; index &gt; all</strong> 。</p>
+</li>
+<li><p><strong>possible_keys:</strong> 查询可能用到的索引。</p>
+</li>
+<li><p><strong>key_len:</strong> 用到的索引长度。</p>
+</li>
+<li><p><strong>ref:</strong> 展示将那些列或者常量与命中的索引比较。</p>
+</li>
+<li><p><strong>rows:</strong> 执行这次查询扫描的行数。</p>
+</li>
+<li><p><strong>filtered:</strong> 过滤行数百分比，最大值是100，当显示100时候，表示没有过滤行， rows显示了检查的估计行数，乘以过滤百分比将显示与下表连接的行数。例如，如果行数为1000，过滤条件为50.00（50％），则与下表联接的行数为1000×50％= 500。</p>
+</li>
+<li><p><strong>extra:</strong> 执行查询额外的条件，<a href="https://dev.mysql.com/doc/refman/5.7/en/explain-output.html#explain-extra-information" target="_blank" rel="noopener">详细的条件可以查看这里</a>。</p>
+</li>
 </ul>
-<p>判断表中的每一行需要遍历所有记录，效率太差，所以数据库就用第一种方式去做冲突检测，也就是用到了意向锁。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文主要从MySQL的加锁范围来分析了MySQL的锁，MySQL根据加锁范围可以分为全局锁、表锁、行锁。全局锁和表锁是MySQL自己实现，行锁都是由引擎层面去实现。InnoDB下的行锁主要分为共享锁和排他锁。共享锁请求后，行只能读，共享锁之间不互斥。排他锁获取后能更新和删除行，排他锁与其他锁都互斥。最后我在行锁的基础上提到了意向锁，意向锁主要表示正在锁住行或者即将锁住行，为了在锁冲突检测中提高效率。当然InnoDB下还有其他锁，比如间隙锁，记录锁，Next-Key锁等，这些都不在本文的探讨范围之内，如有兴趣的同学可以自行研究。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
-<li><p><a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking.html" target="_blank" rel="noopener">MySQL用户手册之InnoDB锁</a></p>
-</li>
-<li><p><a href="https://dev.mysql.com/doc/refman/5.7/en/lock-tables.html" target="_blank" rel="noopener">MySQL用户手册之事务和锁</a></p>
-</li>
-<li><p>《MySQL实战45讲》</p>
-</li>
-</ul>
+<p>掌握了前面这些前置知识，我们来用这些知识分析下经常建议我们的那些MySQL优化建议。</p>
+<h2 id="为什么建议使用自增主键"><a href="#为什么建议使用自增主键" class="headerlink" title="为什么建议使用自增主键"></a>为什么建议使用自增主键</h2><p>当我们每次建立表的时候都在考虑是用自增主键呢？还是用 UUID 呢？但是从性能考虑我们还是建议使用自增 Id,为什么呢？主要是由于 MySQL B+ 树索引性质决定的，数据的新增是要更新索引的，也就是要更新 B+ 树。换句话说，使用自增Id 和 非自增 Id 哪种更新 B+ 树更快，成本更低，谁就是更优的选择。我们来模拟下自增 Id 插入和非自增 Id 插入情况。</p>
+<p><strong>自增Id 插入情况：</strong> 我们在一个已经有10条数据的 B + 数上插入2条数据，分别是10和11，我们看看树是如何变化的。</p>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://s1.ax1x.com/2020/05/23/YxQbF0.gif" alt="自增id"></h2><p>我们这里可以发现两个特点：</p>
+<p>1、自增的数据插入影响的范围永远只有最右的子树，要么直接在子树插入节点，要么就是子树分裂，影响其父节点。</p>
+<p>2、除了最右子树，其他子树的节点都是满的。</p>
+<p>上面两个特点有什么影响呢？我们根据前面 B+ 树索引示意图可以知道，每个点都是一个磁盘块，操作每个节点相当于进行一次 IO,由于每次插入影响的节点只有最右子树，那么磁盘 IO 的范围就可控；<strong>最重要一点是除最右子树，其他子树的节点都是满的，这种情况，叶子节点数据的物理连续性会更好，</strong> 根据<a href="https://baike.baidu.com/item/%E5%B1%80%E9%83%A8%E6%80%A7%E5%8E%9F%E7%90%86" target="_blank" rel="noopener">局部性原理</a>,查询性能也会更高。</p>
+<p><strong>非自增 Id 插入情况：</strong></p>
+<p><img src="https://s1.ax1x.com/2020/05/23/YxQqYV.gif" alt="非自增id"></p>
+<p>非自增 Id 插入特点对比自增 Id 插入我们很容易就能知道：</p>
+<p>1、插入影响节点不可控，无法预知。</p>
+<p>2、每个子树都存在叶子节点不满的情况。</p>
+<p>按照之前的分析思路，我们也就知道了非自增 Id 插入有什么性能劣势了。由于插入数据影响节点不可控，导致节点分裂的情况就会更频繁，节点分裂也是 IO 操作，性能自然受到影响。子树的叶子节点不满，会导致叶子节点物理连续性不好。最后如果我们是UUID的话，Id 过长，会占用节点空间，每个页能存储的节点变少，页分裂变多，性能也会受到影响。这也是为什么建议使用自增主键的原因。</p>
+<h2 id="为什么不要使用-select-查询"><a href="#为什么不要使用-select-查询" class="headerlink" title="为什么不要使用 select * 查询"></a>为什么不要使用 select * 查询</h2><p>我们经常听到查询表，只要查询自己想要的字段，不需要的字段就不要查询，严禁使用 <code>select *</code>，我们能想到很直观的理由就是，数据库要帮你翻译成每个字段名去查询，接着查询多余的字段会占用内存，带宽等资源。这确实是一个理由，而且这个理由很重要，但是我这里想说的是另外一个原因，<strong>覆盖索引</strong>。我之前的一篇索引文章也介绍了覆盖索引，<a href="https://juejin.im/post/5c9f1707e51d45467a0e9ce4" target="_blank" rel="noopener">感兴趣的同学可以点击这里</a>。覆盖索引的意思是指查询使用联合索引覆盖了要查询的字段，这样数据库不用去进行回表，从而减少IO,提高性能。</p>
+<p>这里我用MySQL官方给的示列数据进行一个实验，<a href="https://github.com/datacharmer/test_db" target="_blank" rel="noopener">数据地址下载可以点击这里</a>。</p>
+<p>我选择 <code>employees</code> 表数据进行演示，默认数据是没有联合索引的，我们加上一个联合索引：</p>
+<pre><code class="mysql">---employee表结构-----------
++------------+---------------+------+-----+---------+-------+
+| Field      | Type          | Null | Key | Default | Extra |
++------------+---------------+------+-----+---------+-------+
+| emp_no     | int(11)       | NO   | PRI | NULL    |       |
+| birth_date | date          | NO   |     | NULL    |       |
+| first_name | varchar(14)   | NO   | MUL | NULL    |       |
+| last_name  | varchar(16)   | NO   |     | NULL    |       |
+| gender     | enum(&#39;M&#39;,&#39;F&#39;) | NO   |     | NULL    |       |
+| hire_date  | date          | NO   |     | NULL    |       |
++------------+---------------+------+-----+---------+-------+</code></pre>
+<pre><code class="mysql">ALTER TABLE employees.employees add Index `idx_first_name_last_name` (first_name,last_name);</code></pre>
+<p>查看该表索引情况：<code>show index from employees.employees;</code></p>
+<p><img src="https://s1.ax1x.com/2020/05/23/YxQ4yQ.png" alt="YxQ4yQ.png"></p>
+<p>表已经成功创建了<code>first_name</code> 和 <code>last_name</code>的符合索引，我们开启 profiles 监控 SQL 执行的情况。</p>
+<pre><code class="mysql">SET SESSION profiling = 1;</code></pre>
+<p>然后分别执行以下SQL</p>
+<pre><code class="mysql">SELECT first_name,last_name  FROM employees.employees WHERE first_name=&#39;Eric&#39;;
+SELECT *  FROM employees.employees WHERE first_name=&#39;Eric&#39;;</code></pre>
+<p>查看Profiles；</p>
+<p><img src="https://s1.ax1x.com/2020/05/23/YxQ7oq.png" alt="profiles"></p>
+<p>这里我们看到使用 select * 比 select  字段慢了4倍左右，为什么会这样呢？我们看看执行计划。</p>
+<p><img src="https://s1.ax1x.com/2020/05/23/YxQ5Lj.png" alt="执行计划"></p>
+<p>我们看到两者的执行计划几乎一样，只有 Extra 有区别，使用字段的 Extra 显示 using index，这就告诉你只使用索引就找到了想要的数据，因为你的索引就是用  <code>first_name</code> 和 <code>last_name</code> 建立的， 而 select *  它还需要查询 <code>gender</code>和<code>hire_date</code>字段（主键字段不用额外查，辅助索引指向的就是主键）,所以它不能不进行回表查询其他字段，性能差异也是这里。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文从原理上分析了我们日常的两点建议，为什么建议使用自增主键？为什么不建议使用 select * 查询？其实主要最终的原因还是和索引相关，既然我们用索引来提高我们的效率就要充分利用它，下面是知识点总结：</p>
+<p>1、B+ 树查询的效率高低是受其树高影响，树的高度越低，查询IO次数越少，性能相对也就越高。</p>
+<p>2、执行计划的类型由好到差依次是：<strong>system &gt; const &gt; eq_ref &gt; ref &gt; full_text &gt; ref_or_null &gt; unique_subquery &gt; index_subquery &gt; range &gt;  index_merge &gt; index &gt; all</strong> 。</p>
+<p>3、自增主键的好处就是连续，插入维护的成本相对较低，同时子树的叶子节点大部分是满节点，物理连续性好，查询性能更优。</p>
+<p>4、UUID 主键长度过长，导致单个子节点存储的主键变少，更平凡的出发页分裂，影响性能，这也是为什么建议索引不要太长的原因。</p>
+<p>5、覆盖索引是很好的优化技巧，可以让查询直接通过索引返回数据，而不用回表，减少IO，提升性能。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>1、<a href="https://dev.mysql.com/doc/refman/5.7/en/explain-output.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/explain-output.html</a></p>
+<p>2、<a href="https://dev.mysql.com/doc/refman/5.7/en/explain-output.html#explain-join-types" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/explain-output.html#explain-join-types</a></p>
+<p>3、<a href="http://blog.codinglabs.org/articles/theory-of-mysql-index.html" target="_blank" rel="noopener">http://blog.codinglabs.org/articles/theory-of-mysql-index.html</a></p>
+<p><img src="https://s1.ax1x.com/2020/05/24/YzX1Qe.gif" alt="公众号"></p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论，也可以邮件至 kinglaw1204@gmail.com </span>
@@ -681,12 +777,12 @@ UNLOCK TABLES</code></pre><p><strong>表锁分为读锁和写锁</strong>，读�
 
 
 <div class="article_copyright">
-    <p><span class="copy-title">文章标题:</span>对于MySQL你必须要了解的锁知识</p>
-    <p><span class="copy-title">文章字数:</span><span class="post-count">2.1k</span></p>
+    <p><span class="copy-title">文章标题:</span>从原理上理解MySQL的优化建议</p>
+    <p><span class="copy-title">文章字数:</span><span class="post-count">2.8k</span></p>
     <p><span class="copy-title">本文作者:</span><a  title="木木匠">木木匠</a></p>
-    <p><span class="copy-title">发布时间:</span>2019-04-15, 10:44:12</p>
-    <p><span class="copy-title">最后更新:</span>2020-03-01, 10:45:21</p>
-    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/04/15/mysql-lock/" title="对于MySQL你必须要了解的锁知识">http://luozhou.top/2019/04/15/mysql-lock/</a>
+    <p><span class="copy-title">发布时间:</span>2019-05-23, 10:44:12</p>
+    <p><span class="copy-title">最后更新:</span>2020-05-24, 21:17:39</p>
+    <span class="copy-title">原始链接:</span><a class="post-url" href="/2019/05/23/mysql-performance-analysis/" title="从原理上理解MySQL的优化建议">http://luozhou.top/2019/05/23/mysql-performance-analysis/</a>
     <p>
         <span class="copy-title">版权声明:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" title="CC BY-NC-SA 4.0 International" target = "_blank">"署名-非商用-相同方式共享 4.0"</a> 转载请保留原文链接及作者。
     </p>
